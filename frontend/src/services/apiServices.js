@@ -3,6 +3,7 @@ import api from './api'
 // ── Auth ──────────────────────────────────────────────────────
 export const authApi = {
   login: (data) => api.post('/auth/login', data),
+  logout: () => api.post('/auth/logout'),
 }
 
 // ── Attendance ────────────────────────────────────────────────

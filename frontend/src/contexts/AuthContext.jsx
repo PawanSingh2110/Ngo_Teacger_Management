@@ -1,20 +1,19 @@
 import { createContext, useContext, useState, useCallback } from 'react'
+import { authApi } from '../services/apiServices'
 
 const AuthContext = createContext(null)
 
-const TOKEN_KEY = 'ngo_token'
 const USER_KEY  = 'ngo_user'
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(() => {
-    const token = localStorage.getItem(TOKEN_KEY)
     try {
       const user = JSON.parse(localStorage.getItem(USER_KEY))
-      if (token && user?.role) return { token, user }
+      if (user?.role) return { token: 'cookie', user }
     } catch {
-      // Invalid local storage is cleared below.
+      // Invalid stored user data is cleared below.
     }
-    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem('ngo_token')
     localStorage.removeItem(USER_KEY)
     return { token: null, user: null }
   })
@@ -22,14 +21,14 @@ export function AuthProvider({ children }) {
   const { token, user } = session
 
   const login = useCallback((authResponse) => {
-    localStorage.setItem(TOKEN_KEY, authResponse.accessToken)
+    localStorage.removeItem('ngo_token')
     localStorage.setItem(USER_KEY, JSON.stringify({
       userId:   authResponse.userId,
       email:    authResponse.email,
       fullName: authResponse.fullName,
       role:     authResponse.role,
     }))
-    setSession({ token: authResponse.accessToken, user: {
+    setSession({ token: 'cookie', user: {
       userId:   authResponse.userId,
       email:    authResponse.email,
       fullName: authResponse.fullName,
@@ -38,7 +37,8 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY)
+    authApi.logout().catch(() => {})
+    localStorage.removeItem('ngo_token')
     localStorage.removeItem(USER_KEY)
     setSession({ token: null, user: null })
   }, [])
