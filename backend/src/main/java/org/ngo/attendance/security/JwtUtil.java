@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +25,15 @@ public class JwtUtil {
     private long accessTokenExpiryMs;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(jwtSecret);
+            if (keyBytes.length < 32) {
+                keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+            }
+        } catch (RuntimeException ex) {
+            keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        }
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
