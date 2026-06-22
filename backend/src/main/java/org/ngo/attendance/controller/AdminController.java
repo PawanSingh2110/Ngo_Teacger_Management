@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,11 +35,13 @@ public class AdminController {
     private final TeacherService teacherService;
     private final CenterService centerService;
     private final ProgramService programService;
+    private final ShiftService shiftService;
     private final AttendanceService attendanceService;
     private final TeacherRepository teacherRepository;
     private final CenterRepository centerRepository;
     private final ProgramRepository programRepository;
     private final ExcelExportService excelExportService;
+    private final AuthService authService;
 
     // ==================== DASHBOARD ====================
 
@@ -52,6 +56,16 @@ public class AdminController {
             totalTeachers, totalCenters, totalPrograms
         );
         return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+
+    @PatchMapping("/password")
+    @Operation(summary = "Change own admin password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        authService.changeAdminPassword(userDetails.getUsername(), request);
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
     }
 
     // ==================== TEACHERS ====================
@@ -104,6 +118,58 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> toggleTeacher(@PathVariable UUID id) {
         teacherService.toggleTeacherStatus(id);
         return ResponseEntity.ok(ApiResponse.success("Status updated", null));
+    }
+
+    @PatchMapping("/teachers/{id}/password")
+    @Operation(summary = "Reset teacher password")
+    public ResponseEntity<ApiResponse<Void>> resetTeacherPassword(
+        @PathVariable UUID id,
+        @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        teacherService.resetTeacherPassword(id, request.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success("Teacher password updated", null));
+    }
+
+    // ==================== SHIFTS ====================
+
+    @GetMapping("/shifts")
+    @Operation(summary = "List all shifts")
+    public ResponseEntity<ApiResponse<List<ShiftResponse>>> getShifts() {
+        return ResponseEntity.ok(ApiResponse.success(shiftService.getAllShifts()));
+    }
+
+    @GetMapping("/shifts/{id}")
+    @Operation(summary = "Get shift by ID")
+    public ResponseEntity<ApiResponse<ShiftResponse>> getShift(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(shiftService.getShift(id)));
+    }
+
+    @PostMapping("/shifts")
+    @Operation(summary = "Create shift")
+    public ResponseEntity<ApiResponse<ShiftResponse>> createShift(
+        @Valid @RequestBody ShiftRequest request
+    ) {
+        return ResponseEntity.ok(
+            ApiResponse.success("Shift created", shiftService.createShift(request))
+        );
+    }
+
+    @PutMapping("/shifts/{id}")
+    @Operation(summary = "Update shift")
+    public ResponseEntity<ApiResponse<ShiftResponse>> updateShift(
+        @PathVariable UUID id,
+        @Valid @RequestBody ShiftRequest request
+    ) {
+        return ResponseEntity.ok(
+            ApiResponse.success("Shift updated", shiftService.updateShift(id, request))
+        );
+    }
+
+    @DeleteMapping("/shifts/{id}")
+    @Operation(summary = "Delete shift")
+    public ResponseEntity<ApiResponse<Void>> deleteShift(@PathVariable UUID id) {
+        shiftService.deleteShift(id);
+        return ResponseEntity.ok(ApiResponse.success("Shift deleted successfully", null));
     }
 
     // ==================== CENTERS ====================
@@ -182,6 +248,7 @@ public class AdminController {
     public ResponseEntity<ApiResponse<PagedResponse<AttendanceResponse>>> getAttendance(
         @RequestParam(required = false) UUID teacherId,
         @RequestParam(required = false) UUID centerId,
+        @RequestParam(required = false) UUID shiftId,
         @RequestParam(required = false) String status,
         @RequestParam(required = false) String fromDate,
         @RequestParam(required = false) String toDate,
@@ -191,7 +258,7 @@ public class AdminController {
         @RequestParam(defaultValue = "20") int size
     ) {
         AttendanceFilterRequest filter = buildFilter(
-            teacherId, centerId, status, fromDate, toDate, month, year
+            teacherId, centerId, shiftId, status, fromDate, toDate, month, year
         );
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(
@@ -208,6 +275,7 @@ public class AdminController {
     public ResponseEntity<byte[]> exportAttendance(
         @RequestParam(required = false) UUID teacherId,
         @RequestParam(required = false) UUID centerId,
+        @RequestParam(required = false) UUID shiftId,
         @RequestParam(required = false) String status,
         @RequestParam(required = false) String fromDate,
         @RequestParam(required = false) String toDate,
@@ -215,7 +283,7 @@ public class AdminController {
         @RequestParam(required = false) Integer year
     ) {
         AttendanceFilterRequest filter = buildFilter(
-            teacherId, centerId, status, fromDate, toDate, month, year
+            teacherId, centerId, shiftId, status, fromDate, toDate, month, year
         );
         byte[] excel = excelExportService.exportAttendance(filter);
 
@@ -227,12 +295,13 @@ public class AdminController {
     }
 
     private AttendanceFilterRequest buildFilter(
-        UUID teacherId, UUID centerId, String status,
+        UUID teacherId, UUID centerId, UUID shiftId, String status,
         String fromDate, String toDate, Integer month, Integer year
     ) {
         AttendanceFilterRequest filter = new AttendanceFilterRequest();
         filter.setTeacherId(teacherId);
         filter.setCenterId(centerId);
+        filter.setShiftId(shiftId);
         filter.setMonth(month);
         filter.setYear(year);
 

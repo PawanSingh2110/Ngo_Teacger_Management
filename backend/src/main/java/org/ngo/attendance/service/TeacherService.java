@@ -12,6 +12,7 @@ import org.ngo.attendance.exception.BusinessException;
 import org.ngo.attendance.exception.ResourceNotFoundException;
 import org.ngo.attendance.repository.CenterRepository;
 import org.ngo.attendance.repository.ProgramRepository;
+import org.ngo.attendance.repository.ShiftRepository;
 import org.ngo.attendance.repository.TeacherRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -37,6 +38,7 @@ public class TeacherService {
     private final TeacherRepository teacherRepository;
     private final CenterRepository centerRepository;
     private final ProgramRepository programRepository;
+    private final ShiftRepository shiftRepository;
     private final PasswordEncoder passwordEncoder;
 
     public Page<TeacherResponse> getTeachers(String search, Boolean active, Pageable pageable) {
@@ -85,6 +87,7 @@ public class TeacherService {
 
         assignCenters(teacher, request.getCenterIds());
         assignPrograms(teacher, request.getProgramIds());
+        assignShift(teacher, request.getShiftId());
 
         return toResponse(teacherRepository.save(teacher));
     }
@@ -99,6 +102,7 @@ public class TeacherService {
         if (request.getActive() != null) teacher.setActive(request.getActive());
         if (request.getCenterIds() != null) assignCenters(teacher, request.getCenterIds());
         if (request.getProgramIds() != null) assignPrograms(teacher, request.getProgramIds());
+        if (request.getShiftId() != null) assignShift(teacher, request.getShiftId());
 
         return toResponse(teacherRepository.save(teacher));
     }
@@ -116,6 +120,13 @@ public class TeacherService {
     public void toggleTeacherStatus(UUID id) {
         Teacher teacher = findById(id);
         teacher.setActive(!teacher.getActive());
+        teacherRepository.save(teacher);
+    }
+
+    @Transactional
+    public void resetTeacherPassword(UUID id, String newPassword) {
+        Teacher teacher = findById(id);
+        teacher.setPasswordHash(passwordEncoder.encode(newPassword));
         teacherRepository.save(teacher);
     }
 
@@ -158,6 +169,15 @@ public class TeacherService {
         teacher.setPrograms(programs);
     }
 
+    private void assignShift(Teacher teacher, UUID shiftId) {
+        if (shiftId == null) {
+            teacher.setShift(null);
+            return;
+        }
+        teacher.setShift(shiftRepository.findById(shiftId)
+            .orElseThrow(() -> new BusinessException("Selected shift does not exist")));
+    }
+
     private String normalizeSearch(String search) {
         if (search == null || search.isBlank()) {
             return "";
@@ -180,12 +200,22 @@ public class TeacherService {
                     .id(p.getId()).programName(p.getProgramName()).build())
                 .collect(Collectors.toSet());
 
+        TeacherResponse.ShiftSummary shift = teacher.getShift() == null
+            ? null
+            : TeacherResponse.ShiftSummary.builder()
+                .id(teacher.getShift().getId())
+                .shiftName(teacher.getShift().getShiftName())
+                .startTime(teacher.getShift().getStartTime())
+                .endTime(teacher.getShift().getEndTime())
+                .build();
+
         return TeacherResponse.builder()
             .id(teacher.getId())
             .fullName(teacher.getFullName())
             .email(teacher.getEmail())
             .phoneNumber(teacher.getPhoneNumber())
             .active(teacher.getActive())
+            .shift(shift)
             .centers(centers)
             .programs(programs)
             .createdAt(teacher.getCreatedAt())

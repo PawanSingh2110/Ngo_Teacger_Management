@@ -5,8 +5,10 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.ngo.attendance.dto.request.ChangePasswordRequest;
 import org.ngo.attendance.dto.request.UpdateProfileRequest;
 import org.ngo.attendance.dto.response.*;
+import org.ngo.attendance.service.AuthService;
 import org.ngo.attendance.service.AttendanceService;
 import org.ngo.attendance.service.TeacherService;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +30,7 @@ public class TeacherController {
 
     private final TeacherService teacherService;
     private final AttendanceService attendanceService;
+    private final AuthService authService;
 
     @GetMapping("/profile")
     @Operation(summary = "Get own profile")
@@ -51,6 +54,16 @@ public class TeacherController {
                 teacherService.updateOwnProfile(userDetails.getUsername(), request)
             )
         );
+    }
+
+    @PatchMapping("/password")
+    @Operation(summary = "Change own password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        authService.changeTeacherPassword(userDetails.getUsername(), request);
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
     }
 
     @GetMapping("/dashboard")

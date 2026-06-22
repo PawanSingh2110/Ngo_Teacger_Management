@@ -27,4 +27,6 @@ public class CreateTeacherRequest {
     private Set<UUID> centerIds;
 
     private Set<UUID> programIds;
+
+    private UUID shiftId;
 }

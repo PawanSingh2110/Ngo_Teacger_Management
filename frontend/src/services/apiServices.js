@@ -9,6 +9,7 @@ export const authApi = {
 // ── Attendance ────────────────────────────────────────────────
 export const attendanceApi = {
   markAttendance:  (data) => api.post('/attendance/mark', data),
+  markLogout:      (data) => api.post('/attendance/logout', data),
   getTodayStatus:  ()     => api.get('/attendance/today'),
   getMyHistory:    (page = 0, size = 20) =>
     api.get(`/attendance/my-history?page=${page}&size=${size}`),
@@ -19,6 +20,7 @@ export const attendanceApi = {
 export const teacherApi = {
   getProfile:      ()       => api.get('/teacher/profile'),
   updateProfile:   (data)   => api.patch('/teacher/profile', data),
+  changePassword:  (data)   => api.patch('/teacher/password', data),
   getDashboard:    ()       => api.get('/teacher/dashboard'),
   getHistory:      (page, size) =>
     api.get(`/teacher/attendance/history?page=${page}&size=${size}`),
@@ -28,12 +30,14 @@ export const teacherApi = {
 export const adminApi = {
   // Dashboard
   getDashboard: () => api.get('/admin/dashboard'),
+  changePassword: (data) => api.patch('/admin/password', data),
 
   // Teachers
   getTeachers:       (params) => api.get('/admin/teachers', { params }),
   getTeacher:        (id)     => api.get(`/admin/teachers/${id}`),
   createTeacher:     (data)   => api.post('/admin/teachers', data),
   updateTeacher:     (id, data) => api.put(`/admin/teachers/${id}`, data),
+  resetTeacherPassword: (id, data) => api.patch(`/admin/teachers/${id}/password`, data),
   toggleTeacher:     (id)     => api.patch(`/admin/teachers/${id}/toggle-status`),
   deleteTeacher:     (id)     => api.delete(`/admin/teachers/${id}`),
 
@@ -51,6 +55,13 @@ export const adminApi = {
   updateProgram:     (id, data) => api.put(`/admin/programs/${id}`, data),
   toggleProgram:     (id)     => api.patch(`/admin/programs/${id}/toggle-status`),
   deleteProgram:     (id)     => api.delete(`/admin/programs/${id}`),
+
+  // Shifts
+  getShifts:         ()       => api.get('/admin/shifts'),
+  getShift:          (id)     => api.get(`/admin/shifts/${id}`),
+  createShift:       (data)   => api.post('/admin/shifts', data),
+  updateShift:       (id, data) => api.put(`/admin/shifts/${id}`, data),
+  deleteShift:       (id)     => api.delete(`/admin/shifts/${id}`),
 
   // Attendance
   getAttendance:     (params) => api.get('/admin/attendance', { params }),

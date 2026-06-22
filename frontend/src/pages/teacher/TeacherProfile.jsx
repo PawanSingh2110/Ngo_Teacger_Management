@@ -10,8 +10,9 @@ import {
   Avatar,
   CircularProgress,
   Alert,
+  Divider,
 } from '@mui/material'
-import { Edit, Save, Cancel, Person } from '@mui/icons-material'
+import { Edit, Save, Cancel, Person, Lock } from '@mui/icons-material'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { teacherApi } from '../../services/apiServices'
@@ -20,6 +21,11 @@ export default function TeacherProfile() {
   const qc = useQueryClient()
   const [editing, setEditing] = useState(false)
   const [fullName, setFullName] = useState('')
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  })
 
   const { data, isLoading } = useQuery({
     queryKey: ['teacher-profile'],
@@ -41,6 +47,27 @@ export default function TeacherProfile() {
     },
     onError: () => toast.error('Update failed'),
   })
+
+  const { mutate: changePassword, isPending: passwordPending } = useMutation({
+    mutationFn: () =>
+      teacherApi.changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      }),
+    onSuccess: () => {
+      toast.success('Password changed successfully!')
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Password update failed'),
+  })
+
+  const handlePasswordChange = () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('New password and confirm password do not match')
+      return
+    }
+    changePassword()
+  }
 
   if (isLoading) {
     return (
@@ -217,6 +244,73 @@ export default function TeacherProfile() {
                 <Typography variant="body2">No programs assigned.</Typography>
               )}
             </SingleLineRow>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Box
+            sx={{
+              borderRadius: 2,
+              bgcolor: 'white',
+              border: '1px solid #E5E7EB',
+              p: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Lock fontSize="small" color="success" />
+              <Typography variant="subtitle1" fontWeight={700}>
+                Change Password
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
+              <TextField
+                label="Current Password"
+                type="password"
+                size="small"
+                value={passwordForm.currentPassword}
+                onChange={(e) =>
+                  setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))
+                }
+              />
+              <TextField
+                label="New Password"
+                type="password"
+                size="small"
+                value={passwordForm.newPassword}
+                onChange={(e) =>
+                  setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))
+                }
+              />
+              <TextField
+                label="Confirm Password"
+                type="password"
+                size="small"
+                value={passwordForm.confirmPassword}
+                onChange={(e) =>
+                  setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))
+                }
+              />
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={
+                  passwordPending ? <CircularProgress size={14} color="inherit" /> : <Save fontSize="small" />
+                }
+                onClick={handlePasswordChange}
+                disabled={
+                  passwordPending ||
+                  !passwordForm.currentPassword ||
+                  !passwordForm.newPassword ||
+                  !passwordForm.confirmPassword
+                }
+              >
+                Update Password
+              </Button>
+            </Box>
           </Box>
         </CardContent>
       </Card>

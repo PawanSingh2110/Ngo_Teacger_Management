@@ -15,6 +15,8 @@ import {
   Chip,
   IconButton,
   Dialog,
+  DialogActions,
+  DialogContent,
   DialogTitle,
   Grid,
   FormControl,
@@ -33,6 +35,7 @@ import {
   ToggleOff,
   Search,
   Delete,
+  LockReset,
   People,
   CheckCircle,
   Cancel,
@@ -108,6 +111,8 @@ export default function AdminTeachers() {
   const [statusFilter, setStatusFilter] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTeacher, setEditTeacher] = useState(null)
+  const [resetTeacher, setResetTeacher] = useState(null)
+  const [resetPassword, setResetPassword] = useState('')
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin-teachers', page, searchInput, statusFilter],
@@ -136,6 +141,16 @@ export default function AdminTeachers() {
       qc.invalidateQueries({ queryKey: ['admin-teachers'] })
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Failed to delete teacher'),
+  })
+
+  const { mutate: resetTeacherPassword, isPending: resetPending } = useMutation({
+    mutationFn: () => adminApi.resetTeacherPassword(resetTeacher.id, { newPassword: resetPassword }),
+    onSuccess: () => {
+      toast.success('Teacher password updated')
+      setResetTeacher(null)
+      setResetPassword('')
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Failed to update password'),
   })
 
   const handleDeleteTeacher = (id, name) => {
@@ -200,7 +215,7 @@ export default function AdminTeachers() {
             Teachers
           </Typography>
           <Typography variant="body2" sx={{ color: theme.secondaryText }}>
-            Manage teachers, center assignments and program allocations
+            Manage teachers, shifts, center assignments and program allocations
           </Typography>
         </Box>
 
@@ -398,7 +413,7 @@ export default function AdminTeachers() {
             },
           }}
         >
-          <Table stickyHeader sx={{ minWidth: 1200 }}>
+          <Table stickyHeader sx={{ minWidth: 1350 }}>
             <TableHead>
               <TableRow
                 sx={{
@@ -414,10 +429,11 @@ export default function AdminTeachers() {
                 <TableCell width={60}>#</TableCell>
                 <TableCell width={280}>Teacher</TableCell>
                 <TableCell width={160}>Phone</TableCell>
+                <TableCell width={180}>Shift</TableCell>
                 <TableCell width={250}>Centers</TableCell>
                 <TableCell width={250}>Programs</TableCell>
                 <TableCell width={120}>Status</TableCell>
-                <TableCell width={140} align="center">
+                <TableCell width={170} align="center">
                   Actions
                 </TableCell>
               </TableRow>
@@ -426,7 +442,7 @@ export default function AdminTeachers() {
             <TableBody>
               {error && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                     <Box sx={{ color: theme.redAccent }}>
                       <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
                         Error loading teachers
@@ -439,7 +455,7 @@ export default function AdminTeachers() {
 
               {isLoading && !error && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={28} sx={{ color: theme.primaryGreen }} />
                   </TableCell>
                 </TableRow>
@@ -447,7 +463,7 @@ export default function AdminTeachers() {
 
               {!isLoading && !error && teachers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4, color: theme.secondaryText }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 4, color: theme.secondaryText }}>
                     <Box>
                       <Typography sx={{ fontWeight: 600 }}>No teachers found.</Typography>
                       <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
@@ -497,6 +513,24 @@ export default function AdminTeachers() {
                   </TableCell>
 
                   <TableCell sx={{ color: theme.primaryText }}>{t.phoneNumber || '—'}</TableCell>
+
+                  <TableCell>
+                    {t.shift ? (
+                      <Chip
+                        label={`${t.shift.shiftName} (${t.shift.startTime?.slice(0, 5)}-${t.shift.endTime?.slice(0, 5)})`}
+                        size="small"
+                        sx={{
+                          backgroundColor: '#FFF7ED',
+                          color: '#C2410C',
+                          fontWeight: 500,
+                        }}
+                      />
+                    ) : (
+                      <Typography variant="caption" sx={{ color: theme.secondaryText }}>
+                        None
+                      </Typography>
+                    )}
+                  </TableCell>
 
                   <TableCell>
                     {t.centers?.length > 0 ? (
@@ -596,6 +630,24 @@ export default function AdminTeachers() {
                       </IconButton>
                     </Tooltip>
 
+                    <Tooltip title="Reset Password">
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setResetTeacher(t)
+                          setResetPassword('')
+                        }}
+                        sx={{
+                          color: theme.primaryGreen,
+                          '&:hover': {
+                            backgroundColor: theme.lightGreenBackground,
+                          },
+                        }}
+                      >
+                        <LockReset fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+
                     <Tooltip title="Delete">
                       <IconButton
                         size="small"
@@ -665,6 +717,52 @@ export default function AdminTeachers() {
           }}
           onCancel={() => setDialogOpen(false)}
         />
+      </Dialog>
+
+      <Dialog
+        open={Boolean(resetTeacher)}
+        onClose={() => {
+          setResetTeacher(null)
+          setResetPassword('')
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: theme.primaryText }}>
+          Reset Teacher Password
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: theme.secondaryText, mb: 2 }}>
+            Set a new password for {resetTeacher?.fullName}.
+          </Typography>
+          <TextField
+            fullWidth
+            label="New Password"
+            type="password"
+            value={resetPassword}
+            onChange={(e) => setResetPassword(e.target.value)}
+            helperText="Minimum 6 characters"
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => {
+              setResetTeacher(null)
+              setResetPassword('')
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => resetTeacherPassword()}
+            disabled={resetPending || resetPassword.length < 6}
+            startIcon={resetPending ? <CircularProgress size={14} color="inherit" /> : <LockReset />}
+          >
+            Update Password
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   )

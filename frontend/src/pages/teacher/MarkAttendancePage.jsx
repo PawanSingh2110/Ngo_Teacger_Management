@@ -393,7 +393,9 @@ export default function MarkAttendancePage() {
     )
   }
 
-  if (todayRecord && todayRecord.status === 'PRESENT') {
+  const attendanceRecord = todayRecord || marked
+
+  if (attendanceRecord && attendanceRecord.status === 'PRESENT') {
     return (
       <Box sx={{ width: '100%', overflowX: 'hidden' }}>
         <Box sx={{ mb: 4 }}>
@@ -455,16 +457,16 @@ export default function MarkAttendancePage() {
 
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
               <Chip
-                label={`Date: ${dayjs(todayRecord.attendanceDate).format('DD MMM YYYY')}`}
+                label={`Date: ${dayjs(attendanceRecord.attendanceDate).format('DD MMM YYYY')}`}
                 sx={{
                   bgcolor: theme.blueBackground,
                   color: theme.blueAccent,
                   fontWeight: 600,
                 }}
               />
-              {todayRecord.loginTime && (
+              {attendanceRecord.loginTime && (
                 <Chip
-                  label={`Time: ${dayjs(todayRecord.loginTime).format('hh:mm A')}`}
+                  label={`Time: ${dayjs(attendanceRecord.loginTime).format('hh:mm A')}`}
                   sx={{
                     bgcolor: theme.lightGreenBackground,
                     color: theme.primaryGreen,
@@ -472,10 +474,10 @@ export default function MarkAttendancePage() {
                   }}
                 />
               )}
-              {todayRecord.centerName && (
+              {attendanceRecord.centerName && (
                 <Chip
                   icon={<LocationOn />}
-                  label={todayRecord.centerName}
+                  label={attendanceRecord.centerName}
                   sx={{
                     bgcolor: theme.lightGreenBackground,
                     color: theme.primaryGreen,

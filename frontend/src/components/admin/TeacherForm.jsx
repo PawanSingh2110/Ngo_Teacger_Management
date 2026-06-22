@@ -16,6 +16,7 @@ export default function TeacherForm({ teacher, onSuccess, onCancel }) {
     email: '',
     phoneNumber: '',
     password: '',
+    shiftId: '',
     centerIds: [],
     programIds: [],
   })
@@ -27,6 +28,7 @@ export default function TeacherForm({ teacher, onSuccess, onCancel }) {
         email: teacher.email || '',
         phoneNumber: teacher.phoneNumber || '',
         password: '',
+        shiftId: teacher.shift?.id || '',
         centerIds: teacher.centers?.map(c => c.id) || [],
         programIds: teacher.programs?.map(p => p.id) || [],
       })
@@ -36,6 +38,7 @@ export default function TeacherForm({ teacher, onSuccess, onCancel }) {
         email: '',
         phoneNumber: '',
         password: '',
+        shiftId: '',
         centerIds: [],
         programIds: [],
       })
@@ -50,19 +53,28 @@ export default function TeacherForm({ teacher, onSuccess, onCancel }) {
     queryKey: ['programs-list'],
     queryFn: () => adminApi.getPrograms(),
   })
+  const { data: shiftsData, isLoading: shiftsLoading, isError: shiftsError } = useQuery({
+    queryKey: ['shifts-list'],
+    queryFn: () => adminApi.getShifts(),
+  })
 
   const centers  = centersData?.data?.data || []
   const programs = programsData?.data?.data || []
+  const shifts = shiftsData?.data?.data || []
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => isEdit
       ? adminApi.updateTeacher(teacher.id, {
           fullName: form.fullName,
           phoneNumber: form.phoneNumber,
+          shiftId: form.shiftId || null,
           centerIds: form.centerIds,
           programIds: form.programIds,
         })
-      : adminApi.createTeacher(form),
+      : adminApi.createTeacher({
+          ...form,
+          shiftId: form.shiftId || null,
+        }),
     onSuccess: () => {
       toast.success(isEdit ? 'Teacher updated!' : 'Teacher created!')
       onSuccess()
@@ -103,6 +115,34 @@ export default function TeacherForm({ teacher, onSuccess, onCancel }) {
                 onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </Grid>
           )}
+          <Grid item xs={12}>
+            {shiftsError && <Alert severity="error" sx={{ mb: 2 }}>Failed to load shifts</Alert>}
+            <FormControl fullWidth disabled={shiftsLoading}>
+              <InputLabel>Assign Shift</InputLabel>
+              <Select
+                value={form.shiftId}
+                onChange={(e) => setForm({ ...form, shiftId: e.target.value })}
+                input={<OutlinedInput label="Assign Shift" />}
+              >
+                <MenuItem value="">No shift assigned</MenuItem>
+                {shiftsLoading ? (
+                  <MenuItem disabled>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CircularProgress size={20} /> Loading...
+                    </Box>
+                  </MenuItem>
+                ) : shifts.length > 0 ? (
+                  shifts.map((s) => (
+                    <MenuItem key={s.id} value={s.id}>
+                      {s.shiftName} ({s.startTime?.slice(0, 5)} - {s.endTime?.slice(0, 5)})
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No shifts available</MenuItem>
+                )}
+              </Select>
+            </FormControl>
+          </Grid>
           <Grid item xs={12}>
             {centersError && <Alert severity="error" sx={{ mb: 2 }}>Failed to load centers</Alert>}
             <FormControl fullWidth disabled={centersLoading}>

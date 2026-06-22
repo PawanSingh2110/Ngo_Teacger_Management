@@ -43,7 +43,7 @@ public class ExcelExportService {
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Teacher Attendance Report");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 8));
             titleRow.setHeightInPoints(30);
 
             // ── Sub-title: record count ──────────────────────────
@@ -51,14 +51,15 @@ public class ExcelExportService {
             Cell subCell = subRow.createCell(0);
             subCell.setCellValue("Total Records: " + records.size());
             subCell.setCellStyle(dataStyle);
-            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 6));
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 8));
 
             // ── Blank row ────────────────────────────────────────
             sheet.createRow(2);
 
             // ── Header Row ───────────────────────────────────────
             String[] headers = {
-                "#", "Teacher Name", "Center", "Date", "Login Time", "Status", "Location"
+                "#", "Teacher Name", "Center", "Date", "Login Time", "Logout Time",
+                "Status", "Logout Location", "Center Address"
             };
             Row headerRow = sheet.createRow(3);
             headerRow.setHeightInPoints(20);
@@ -85,17 +86,26 @@ public class ExcelExportService {
                     rec.getLoginTime() != null
                         ? rec.getLoginTime().format(TIME_FMT) : "—", dataStyle);
 
+                createCell(row, 5,
+                    rec.getLogoutTime() != null
+                        ? rec.getLogoutTime().format(TIME_FMT) : "—", dataStyle);
+
                 // Status cell with color
-                Cell statusCell = row.createCell(5);
+                Cell statusCell = row.createCell(6);
                 statusCell.setCellValue(rec.getStatus().name());
                 statusCell.setCellStyle(
                     rec.getStatus() == AttendanceStatus.PRESENT ? presentStyle : absentStyle
                 );
 
-                String location = (rec.getLatitude() != null && rec.getLongitude() != null)
-                    ? rec.getLatitude() + ", " + rec.getLongitude()
+                String logoutLocation = rec.getLogoutWithinRadius() == null
+                    ? "Not marked"
+                    : rec.getLogoutWithinRadius() ? "Inside center radius" : "Outside center radius";
+                createCell(row, 7, logoutLocation, dataStyle);
+
+                String centerAddress = rec.getCenterAddress() != null && !rec.getCenterAddress().isBlank()
+                    ? rec.getCenterAddress()
                     : "—";
-                createCell(row, 6, location, dataStyle);
+                createCell(row, 8, centerAddress, dataStyle);
             }
 
             // ── Summary section ──────────────────────────────────
@@ -109,7 +119,7 @@ public class ExcelExportService {
             Cell sh = summaryHeader.createCell(0);
             sh.setCellValue("Summary");
             sh.setCellStyle(headerStyle);
-            sheet.addMergedRegion(new CellRangeAddress(rowNum - 1, rowNum - 1, 0, 6));
+            sheet.addMergedRegion(new CellRangeAddress(rowNum - 1, rowNum - 1, 0, 8));
 
             Row presentRow = sheet.createRow(rowNum++);
             createCell(presentRow, 0, "Total Present", dataStyle);
@@ -128,9 +138,11 @@ public class ExcelExportService {
             sheet.setColumnWidth(1, 25 * 256);   // Name
             sheet.setColumnWidth(2, 20 * 256);   // Center
             sheet.setColumnWidth(3, 15 * 256);   // Date
-            sheet.setColumnWidth(4, 15 * 256);   // Time
-            sheet.setColumnWidth(5, 12 * 256);   // Status
-            sheet.setColumnWidth(6, 30 * 256);   // Location
+            sheet.setColumnWidth(4, 15 * 256);   // Login Time
+            sheet.setColumnWidth(5, 15 * 256);   // Logout Time
+            sheet.setColumnWidth(6, 12 * 256);   // Status
+            sheet.setColumnWidth(7, 24 * 256);   // Logout Location
+            sheet.setColumnWidth(8, 45 * 256);   // Center Address
 
             // ── Freeze header ────────────────────────────────────
             sheet.createFreezePane(0, 4);

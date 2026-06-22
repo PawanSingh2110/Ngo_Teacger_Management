@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -19,6 +20,7 @@ public class TeacherResponse {
     private String email;
     private String phoneNumber;
     private Boolean active;
+    private ShiftSummary shift;
     private Set<CenterSummary> centers;
     private Set<ProgramSummary> programs;
     private LocalDateTime createdAt;
@@ -39,5 +41,16 @@ public class TeacherResponse {
     public static class ProgramSummary {
         private UUID id;
         private String programName;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ShiftSummary {
+        private UUID id;
+        private String shiftName;
+        private LocalTime startTime;
+        private LocalTime endTime;
     }
 }

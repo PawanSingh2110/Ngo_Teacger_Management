@@ -39,6 +39,10 @@ public class Teacher {
     @Builder.Default
     private Boolean active = true;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shift_id")
+    private Shift shift;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "teacher_centers",

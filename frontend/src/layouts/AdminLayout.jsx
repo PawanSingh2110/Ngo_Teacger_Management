@@ -20,6 +20,8 @@ import {
   LocationCity,
   School,
   EventNote,
+  Schedule,
+  Settings,
   Menu as MenuIcon,
   Logout,
 } from '@mui/icons-material'
@@ -53,6 +55,16 @@ const navItems = [
     label: 'Attendance',
     path: '/admin/attendance',
     icon: <EventNote />,
+  },
+  {
+    label: 'Shifts',
+    path: '/admin/shifts',
+    icon: <Schedule />,
+  },
+  {
+    label: 'Settings',
+    path: '/admin/settings',
+    icon: <Settings />,
   },
 ]
 

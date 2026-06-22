@@ -3,12 +3,9 @@ package org.ngo.attendance.scheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ngo.attendance.service.AttendanceService;
-import org.springframework.beans.factory.annotation.Value;
+import org.ngo.attendance.util.AppClock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -18,16 +15,17 @@ public class AbsentMarkingScheduler {
     private final AttendanceService attendanceService;
 
     /**
-     * Runs daily at 11 PM.
+     * Runs every minute.
      * For every active teacher without attendance today → mark ABSENT.
-     * Cron: second minute hour day month weekday
+     * Closed shifts are finalized and missing attendance is marked absent.
      */
-    @Scheduled(cron = "${app.scheduler.absent-marking-cron}")
+    @Scheduled(cron = "${app.scheduler.absent-marking-cron}", zone = "${app.time-zone}")
     public void markAbsentTeachers() {
-        log.info("=== Absent Marking Scheduler started at {} ===", LocalDateTime.now());
+        log.info("=== Absent Marking Scheduler started at {} ===", AppClock.now());
         try {
+            attendanceService.markEndedSessionsWithoutLogout();
             attendanceService.markAbsentForMissingTeachers();
-            log.info("=== Absent Marking Scheduler completed for date: {} ===", LocalDate.now());
+            log.info("=== Absent Marking Scheduler completed for date: {} ===", AppClock.today());
         } catch (Exception e) {
             log.error("Error in Absent Marking Scheduler: {}", e.getMessage(), e);
         }

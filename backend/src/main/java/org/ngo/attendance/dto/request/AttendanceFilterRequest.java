@@ -11,6 +11,7 @@ public class AttendanceFilterRequest {
     private UUID teacherId;
     private UUID centerId;
     private UUID programId;
+    private UUID shiftId;
     private AttendanceStatus status;
     private LocalDate fromDate;
     private LocalDate toDate;

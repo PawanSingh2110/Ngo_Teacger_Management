@@ -20,9 +20,12 @@ import AdminTeachers     from './pages/admin/AdminTeachers'
 import AdminCenters      from './pages/admin/AdminCenters'
 import AdminPrograms     from './pages/admin/AdminPrograms'
 import AdminAttendance   from './pages/admin/AdminAttendance'
+import AdminShifts       from './pages/admin/AdminShifts'
+import AdminSettings     from './pages/admin/AdminSettings'
 
 import TeacherDashboard  from './pages/teacher/TeacherDashboard'
 import MarkAttendancePage from './pages/teacher/MarkAttendancePage'
+import LogoutAttendancePage from './pages/teacher/LogoutAttendancePage'
 import AttendanceHistory from './pages/teacher/AttendanceHistory'
 import TeacherProfile    from './pages/teacher/TeacherProfile'
 
@@ -59,6 +62,8 @@ export default function App() {
                 <Route path="programs"   element={<AdminPrograms />} />
                 <Route path="attendance" element={<AdminAttendance />} />
                 <Route path="reports"    element={<AdminAttendance />} />
+                <Route path="shifts"     element={<AdminShifts />} />
+                <Route path="settings"   element={<AdminSettings />} />
               </Route>
 
               {/* Teacher */}
@@ -68,6 +73,7 @@ export default function App() {
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard"  element={<TeacherDashboard />} />
                 <Route path="attendance" element={<MarkAttendancePage />} />
+                <Route path="logout-attendance" element={<LogoutAttendancePage />} />
                 <Route path="history"    element={<AttendanceHistory />} />
                 <Route path="profile"    element={<TeacherProfile />} />
               </Route>

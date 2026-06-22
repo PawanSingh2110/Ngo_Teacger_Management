@@ -171,6 +171,9 @@ export default function AttendanceHistory() {
                 <TableCell>Day</TableCell>
                 <TableCell>Center</TableCell>
                 <TableCell>Login Time</TableCell>
+                <TableCell>Logout Time</TableCell>
+                <TableCell>Shift</TableCell>
+                <TableCell>Punctuality</TableCell>
                 <TableCell>Status</TableCell>
               </TableRow>
             </TableHead>
@@ -178,7 +181,7 @@ export default function AttendanceHistory() {
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
@@ -186,7 +189,7 @@ export default function AttendanceHistory() {
 
               {!isLoading && records.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                     No attendance records found.
                   </TableCell>
                 </TableRow>
@@ -211,6 +214,25 @@ export default function AttendanceHistory() {
                   </TableCell>
                   <TableCell>{r.centerName || '—'}</TableCell>
                   <TableCell>{r.loginTime ? dayjs(r.loginTime).format('hh:mm A') : '—'}</TableCell>
+                  <TableCell>{r.logoutTime ? dayjs(r.logoutTime).format('hh:mm A') : '—'}</TableCell>
+                  <TableCell>
+                    {r.shiftName || '-'}
+                  </TableCell>
+                  <TableCell>
+                    {r.status === 'PRESENT' ? (
+                      <Chip
+                        label={r.late ? `Late by ${r.lateByMinutes || 0} min` : 'On time'}
+                        size="small"
+                        sx={{
+                          fontWeight: 600,
+                          bgcolor: r.late ? '#FFF7ED' : '#E8F5E9',
+                          color: r.late ? '#C2410C' : '#2E7D32',
+                        }}
+                      />
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Chip
                       label={r.status}

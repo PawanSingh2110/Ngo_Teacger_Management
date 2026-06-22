@@ -23,6 +23,7 @@ public interface TeacherRepository extends JpaRepository<Teacher, UUID> {
 
     @Query("""
         SELECT DISTINCT t FROM Teacher t
+        LEFT JOIN FETCH t.shift
         LEFT JOIN FETCH t.centers
         LEFT JOIN FETCH t.programs
         WHERE t.id = :id
@@ -31,6 +32,7 @@ public interface TeacherRepository extends JpaRepository<Teacher, UUID> {
 
     @Query("""
         SELECT DISTINCT t FROM Teacher t
+        LEFT JOIN FETCH t.shift
         LEFT JOIN FETCH t.centers
         LEFT JOIN FETCH t.programs
         WHERE t.id IN :ids

@@ -53,6 +53,25 @@ public class AttendanceController {
         );
     }
 
+    @PostMapping("/logout")
+    @PreAuthorize("hasRole('TEACHER')")
+    @Operation(
+        summary = "Mark logout",
+        description = "Teacher submits GPS coordinates at logout. Backend records logout time " +
+                      "and whether the teacher is still inside the assigned center radius."
+    )
+    public ResponseEntity<ApiResponse<AttendanceResponse>> markLogout(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @Valid @RequestBody MarkAttendanceRequest request
+    ) {
+        AttendanceResponse response = attendanceService.markLogout(
+            userDetails.getUsername(), request
+        );
+        return ResponseEntity.ok(
+            ApiResponse.success("Logout marked successfully.", response)
+        );
+    }
+
     @GetMapping("/today")
     @PreAuthorize("hasRole('TEACHER')")
     @Operation(summary = "Get today's attendance status for logged-in teacher")

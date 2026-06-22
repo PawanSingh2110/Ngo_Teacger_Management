@@ -1,5 +1,8 @@
 package org.ngo.attendance.service;
 
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ngo.attendance.dto.request.AttendanceFilterRequest;
@@ -14,6 +17,7 @@ import org.ngo.attendance.exception.LocationValidationException;
 import org.ngo.attendance.repository.AttendanceRepository;
 import org.ngo.attendance.repository.CenterRepository;
 import org.ngo.attendance.repository.TeacherRepository;
+import org.ngo.attendance.util.AppClock;
 import org.ngo.attendance.util.GeoUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,17 +25,17 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Predicate;
-
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,76 +48,71 @@ public class AttendanceService {
     private final TeacherRepository teacherRepository;
     private final CenterRepository centerRepository;
 
-    /**
-     * MARK ATTENDANCE — separate from login.
-     * Validates GPS location against teacher's assigned centers.
-     * One record per day enforced via DB unique constraint.
-     */
     @Transactional
     public AttendanceResponse markAttendance(String teacherEmail, MarkAttendanceRequest request) {
         Teacher teacher = teacherRepository.findByEmail(teacherEmail)
                 .orElseThrow(() -> new BusinessException("Teacher not found"));
 
-        LocalDate today = LocalDate.now();
-        LocalTime now = LocalTime.now();
-        // ✅ Time window check — 6 AM to 6 PM only
-        LocalTime windowStart = LocalTime.of(6, 0);
-        LocalTime windowEnd = LocalTime.of(18, 0);
-
-        if (now.isBefore(windowStart) || now.isAfter(windowEnd)) {
-            throw new BusinessException(
-                    "Attendance can only be marked between 6:00 AM and 6:00 PM. " +
-                            "Current time: " + now.format(DateTimeFormatter.ofPattern("hh:mm a")));
+        Shift shift = teacher.getShift();
+        if (shift == null || !Boolean.TRUE.equals(shift.getActive())) {
+            throw new BusinessException("No active shift is assigned to you. Contact admin.");
         }
 
-        // Check if attendance already marked today
+        LocalDate today = AppClock.today();
+        LocalDateTime now = AppClock.now();
+        LocalDateTime shiftStart = LocalDateTime.of(today, shift.getStartTime());
+        LocalDateTime shiftEnd = LocalDateTime.of(today, shift.getEndTime());
+
+        if (now.isBefore(shiftStart)) {
+            throw new BusinessException(
+                    "Your shift has not started. Shift starts at " +
+                            shift.getStartTime().format(DateTimeFormatter.ofPattern("hh:mm a")) +
+                            ". Current time: " + now.format(DateTimeFormatter.ofPattern("hh:mm a")));
+        }
+        if (now.isAfter(shiftEnd)) {
+            throw new BusinessException(
+                    "Your shift has already ended. Shift ended at " +
+                            shift.getEndTime().format(DateTimeFormatter.ofPattern("hh:mm a")) +
+                            ". Contact admin if you missed attendance.");
+        }
+
         if (attendanceRepository.existsByTeacherAndAttendanceDate(teacher, today)) {
             throw new BusinessException(
                     "Attendance already marked for today. You're already marked PRESENT.");
         }
 
-        // Load teacher's assigned centers with location data
         List<Center> assignedCenters = centerRepository.findAllByTeacherId(teacher.getId());
-
         if (assignedCenters.isEmpty()) {
             throw new BusinessException("You are not assigned to any center. Contact admin.");
         }
 
-        // Find nearest center within allowed radius (Haversine)
-        Center matchedCenter = null;
-        double minDistance = Double.MAX_VALUE;
-
-        for (Center center : assignedCenters) {
-            if (!center.getActive())
-                continue;
-
-            /// rember this
-            double distance = GeoUtils.calculateDistance(
-                    request.getLatitude().doubleValue(), request.getLongitude().doubleValue(),
-                    center.getLatitude().doubleValue(), center.getLongitude().doubleValue());
-
-            log.debug("Distance to center '{}': {}m (allowed: {}m)",
-                    center.getCenterName(), Math.round(distance * 10.0) / 10.0,
-                    center.getRadiusInMeters());
-
-            if (distance <= center.getRadiusInMeters() && distance < minDistance) {
-                minDistance = distance;
-                matchedCenter = center;
-            }
+        CenterDistance nearest = findNearestCenter(assignedCenters, request);
+        if (nearest == null) {
+            throw new BusinessException("No active assigned center found. Contact admin.");
         }
-
-        if (matchedCenter == null) {
+        if (!nearest.withinRadius()) {
             throw new LocationValidationException(
                     "You are outside the allowed center area. " +
-                            "Please ensure you are physically present at your assigned center to mark attendance.");
+                            "Nearest center: " + nearest.center().getCenterName() + ". " +
+                            "Distance: " + formatMeters(nearest.distanceMeters()) + "m. " +
+                            "Allowed radius: " + nearest.center().getRadiusInMeters() + "m. " +
+                            "You are " + formatMeters(nearest.distanceOutsideRadius()) +
+                            "m away from the allowed radius.");
         }
 
+        int lateByMinutes = (int) Math.max(0, Duration.between(shiftStart, now).toMinutes());
         Attendance attendance = Attendance.builder()
                 .teacher(teacher)
-                .center(matchedCenter)
+                .center(nearest.center())
+                .shift(shift)
                 .attendanceDate(today)
-                .loginTime(LocalDateTime.now())
+                .loginTime(now)
                 .status(AttendanceStatus.PRESENT)
+                .sessionStatus(AttendanceSessionStatus.OPEN)
+                .late(lateByMinutes > 0)
+                .lateByMinutes(lateByMinutes > 0 ? lateByMinutes : null)
+                .checkInWithinRadius(true)
+                .checkInDistanceMeters(roundMeters(nearest.distanceMeters()))
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
                 .build();
@@ -121,7 +120,51 @@ public class AttendanceService {
         return toResponse(attendanceRepository.save(attendance));
     }
 
-    // Teacher views own attendance history
+    @Transactional
+    public AttendanceResponse markLogout(String teacherEmail, MarkAttendanceRequest request) {
+        Teacher teacher = teacherRepository.findByEmail(teacherEmail)
+                .orElseThrow(() -> new BusinessException("Teacher not found"));
+
+        Attendance attendance = attendanceRepository.findByTeacherAndAttendanceDate(teacher, AppClock.today())
+                .orElseThrow(() -> new BusinessException("Mark attendance first before logging out."));
+
+        if (attendance.getStatus() != AttendanceStatus.PRESENT) {
+            throw new BusinessException("Logout can only be marked for PRESENT attendance.");
+        }
+        if (attendance.getLogoutTime() != null ||
+                attendance.getSessionStatus() == AttendanceSessionStatus.LOGGED_OUT) {
+            throw new BusinessException("Logout already marked for today.");
+        }
+        if (attendance.getCenter() == null) {
+            throw new BusinessException("No center is linked to today's attendance.");
+        }
+        if (attendance.getShift() == null) {
+            throw new BusinessException("No shift is linked to today's attendance.");
+        }
+
+        LocalDateTime now = AppClock.now();
+        LocalDateTime shiftEnd = LocalDateTime.of(attendance.getAttendanceDate(), attendance.getShift().getEndTime());
+        if (now.isBefore(shiftEnd)) {
+            throw new BusinessException(
+                    "Your shift has not ended yet. Logout can be marked after " +
+                            attendance.getShift().getEndTime().format(DateTimeFormatter.ofPattern("hh:mm a")));
+        }
+
+        Center center = attendance.getCenter();
+        double distance = GeoUtils.calculateDistance(
+                request.getLatitude().doubleValue(), request.getLongitude().doubleValue(),
+                center.getLatitude().doubleValue(), center.getLongitude().doubleValue());
+
+        attendance.setLogoutTime(now);
+        attendance.setLogoutLatitude(request.getLatitude());
+        attendance.setLogoutLongitude(request.getLongitude());
+        attendance.setLogoutWithinRadius(distance <= center.getRadiusInMeters());
+        attendance.setLogoutDistanceMeters(roundMeters(distance));
+        attendance.setSessionStatus(AttendanceSessionStatus.LOGGED_OUT);
+
+        return toResponse(attendanceRepository.save(attendance));
+    }
+
     public Page<AttendanceResponse> getMyAttendance(String email, Pageable pageable) {
         Teacher teacher = teacherRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException("Teacher not found"));
@@ -130,16 +173,14 @@ public class AttendanceService {
                 .map(this::toResponse);
     }
 
-    // Teacher's today status
     public Optional<AttendanceResponse> getTodayStatus(String email) {
         Teacher teacher = teacherRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException("Teacher not found"));
         return attendanceRepository
-                .findByTeacherAndAttendanceDate(teacher, LocalDate.now())
+                .findByTeacherAndAttendanceDate(teacher, AppClock.today())
                 .map(this::toResponse);
     }
 
-    // Monthly summary for teacher dashboard
     public List<MonthlySummaryResponse> getMonthlySummary(UUID teacherId) {
         List<Object[]> rows = attendanceRepository.getMonthlySummaryByTeacher(teacherId);
         return rows.stream().map(row -> {
@@ -156,13 +197,12 @@ public class AttendanceService {
         }).collect(Collectors.toList());
     }
 
-    // Teacher dashboard
     public TeacherDashboardResponse getTeacherDashboard(String email) {
         Teacher teacher = teacherRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException("Teacher not found"));
 
         Optional<Attendance> todayAtt = attendanceRepository
-                .findByTeacherAndAttendanceDate(teacher, LocalDate.now());
+                .findByTeacherAndAttendanceDate(teacher, AppClock.today());
 
         List<MonthlySummaryResponse> monthlySummary = getMonthlySummary(teacher.getId());
 
@@ -174,6 +214,7 @@ public class AttendanceService {
         return TeacherDashboardResponse.builder()
                 .teacherName(teacher.getFullName())
                 .todayStatus(todayAtt.map(Attendance::getStatus).orElse(null))
+                .todaySessionStatus(todayAtt.map(this::resolveSessionStatus).orElse(null))
                 .todayLoginTime(todayAtt
                         .map(a -> a.getLoginTime() != null ? a.getLoginTime().toString() : null)
                         .orElse(null))
@@ -183,10 +224,9 @@ public class AttendanceService {
                 .build();
     }
 
-    // Admin dashboard stats
     public DashboardStatsResponse getDashboardStats(
             long totalTeachers, long totalCenters, long totalPrograms) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = AppClock.today();
         long presentToday = attendanceRepository
                 .countByAttendanceDateAndStatus(today, AttendanceStatus.PRESENT);
         long absentToday = attendanceRepository
@@ -206,12 +246,10 @@ public class AttendanceService {
                 .build();
     }
 
-    // Admin filtered attendance
     public Page<AttendanceResponse> getAttendanceWithFilters(
             AttendanceFilterRequest filter, Pageable pageable) {
         validateFilter(filter);
 
-        // If month/year provided, convert to date range
         LocalDate from = filter.getFromDate();
         LocalDate to = filter.getToDate();
 
@@ -225,7 +263,6 @@ public class AttendanceService {
                 pageable).map(this::toResponse);
     }
 
-    // For Excel export
     public List<AttendanceResponse> getAllForExport(AttendanceFilterRequest filter) {
         validateFilter(filter);
 
@@ -242,28 +279,50 @@ public class AttendanceService {
                 .collect(Collectors.toList());
     }
 
-    // Called by scheduler
     @Transactional
     public void markAbsentForMissingTeachers() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = AppClock.today();
+        LocalDateTime now = AppClock.now();
         List<UUID> presentTeacherIds = attendanceRepository.findTeacherIdsWithAttendanceOnDate(today);
 
         List<Teacher> allActive = teacherRepository.findAllByActiveTrue();
 
         List<Attendance> absentRecords = allActive.stream()
                 .filter(t -> !presentTeacherIds.contains(t.getId()))
+                .filter(t -> t.getShift() != null)
+                .filter(t -> Boolean.TRUE.equals(t.getShift().getActive()))
+                .filter(t -> LocalDateTime.of(today, t.getShift().getEndTime()).isBefore(now))
                 .map(teacher -> Attendance.builder()
                         .teacher(teacher)
+                        .shift(teacher.getShift())
                         .center(null)
                         .attendanceDate(today)
                         .loginTime(null)
                         .status(AttendanceStatus.ABSENT)
+                        .sessionStatus(AttendanceSessionStatus.NOT_STARTED)
+                        .late(false)
                         .build())
                 .collect(Collectors.toList());
 
         if (!absentRecords.isEmpty()) {
             attendanceRepository.saveAll(absentRecords);
             log.info("Marked {} teachers as ABSENT for {}", absentRecords.size(), today);
+        }
+    }
+
+    @Transactional
+    public void markEndedSessionsWithoutLogout() {
+        LocalDate today = AppClock.today();
+        LocalDateTime now = AppClock.now();
+        List<Attendance> ended = attendanceRepository.findOpenSessionsOnOrBefore(today).stream()
+                .filter(a -> a.getShift() != null)
+                .filter(a -> LocalDateTime.of(a.getAttendanceDate(), a.getShift().getEndTime()).isBefore(now))
+                .peek(a -> a.setSessionStatus(AttendanceSessionStatus.ENDED_NO_LOGOUT))
+                .toList();
+
+        if (!ended.isEmpty()) {
+            attendanceRepository.saveAll(ended);
+            log.info("Marked {} attendance sessions as ended without logout", ended.size());
         }
     }
 
@@ -274,13 +333,68 @@ public class AttendanceService {
                 .teacherName(a.getTeacher().getFullName())
                 .centerId(a.getCenter() != null ? a.getCenter().getId() : null)
                 .centerName(a.getCenter() != null ? a.getCenter().getCenterName() : null)
+                .centerAddress(a.getCenter() != null ? a.getCenter().getAddress() : null)
+                .shiftId(a.getShift() != null ? a.getShift().getId() : null)
+                .shiftName(a.getShift() != null ? a.getShift().getShiftName() : null)
+                .shiftStartTime(a.getShift() != null ? a.getShift().getStartTime() : null)
+                .shiftEndTime(a.getShift() != null ? a.getShift().getEndTime() : null)
                 .attendanceDate(a.getAttendanceDate())
                 .loginTime(a.getLoginTime())
+                .logoutTime(a.getLogoutTime())
                 .status(a.getStatus())
+                .sessionStatus(resolveSessionStatus(a))
+                .late(a.getLate())
+                .lateByMinutes(a.getLateByMinutes())
+                .checkInWithinRadius(a.getCheckInWithinRadius())
+                .checkInDistanceMeters(a.getCheckInDistanceMeters())
                 .latitude(a.getLatitude())
                 .longitude(a.getLongitude())
+                .logoutLatitude(a.getLogoutLatitude())
+                .logoutLongitude(a.getLogoutLongitude())
+                .logoutWithinRadius(a.getLogoutWithinRadius())
+                .logoutDistanceMeters(a.getLogoutDistanceMeters())
                 .createdAt(a.getCreatedAt())
                 .build();
+    }
+
+    private AttendanceSessionStatus resolveSessionStatus(Attendance attendance) {
+        if (attendance.getSessionStatus() != null && attendance.getSessionStatus() != AttendanceSessionStatus.OPEN) {
+            return attendance.getSessionStatus();
+        }
+        if (attendance.getLogoutTime() != null) {
+            return AttendanceSessionStatus.LOGGED_OUT;
+        }
+        if (attendance.getStatus() == AttendanceStatus.PRESENT && attendance.getShift() != null) {
+            LocalDateTime shiftEnd = LocalDateTime.of(attendance.getAttendanceDate(), attendance.getShift().getEndTime());
+            if (AppClock.now().isAfter(shiftEnd)) {
+                return AttendanceSessionStatus.ENDED_NO_LOGOUT;
+            }
+        }
+        if (attendance.getStatus() == AttendanceStatus.ABSENT) {
+            return AttendanceSessionStatus.NOT_STARTED;
+        }
+        return attendance.getSessionStatus() != null ? attendance.getSessionStatus() : AttendanceSessionStatus.OPEN;
+    }
+
+    private CenterDistance findNearestCenter(List<Center> centers, MarkAttendanceRequest request) {
+        CenterDistance nearest = null;
+        for (Center center : centers) {
+            if (!Boolean.TRUE.equals(center.getActive())) {
+                continue;
+            }
+
+            double distance = GeoUtils.calculateDistance(
+                    request.getLatitude().doubleValue(), request.getLongitude().doubleValue(),
+                    center.getLatitude().doubleValue(), center.getLongitude().doubleValue());
+
+            log.debug("Distance to center '{}': {}m (allowed: {}m)",
+                    center.getCenterName(), formatMeters(distance), center.getRadiusInMeters());
+
+            if (nearest == null || distance < nearest.distanceMeters()) {
+                nearest = new CenterDistance(center, distance);
+            }
+        }
+        return nearest;
     }
 
     private void validateFilter(AttendanceFilterRequest filter) {
@@ -307,6 +421,7 @@ public class AttendanceService {
         return (root, query, cb) -> {
             Join<Attendance, Teacher> teacher = root.join("teacher", JoinType.INNER);
             Join<Attendance, Center> center = root.join("center", JoinType.LEFT);
+            Join<Attendance, Shift> shift = root.join("shift", JoinType.LEFT);
             List<Predicate> predicates = new ArrayList<>();
 
             if (filter.getTeacherId() != null) {
@@ -314,6 +429,9 @@ public class AttendanceService {
             }
             if (filter.getCenterId() != null) {
                 predicates.add(cb.equal(center.get("id"), filter.getCenterId()));
+            }
+            if (filter.getShiftId() != null) {
+                predicates.add(cb.equal(shift.get("id"), filter.getShiftId()));
             }
             if (filter.getProgramId() != null) {
                 Join<Teacher, Program> program = teacher.join("programs", JoinType.INNER);
@@ -335,5 +453,23 @@ public class AttendanceService {
 
             return cb.and(predicates.toArray(Predicate[]::new));
         };
+    }
+
+    private double roundMeters(double meters) {
+        return Math.round(meters * 10.0) / 10.0;
+    }
+
+    private String formatMeters(double meters) {
+        return String.format(Locale.ENGLISH, "%.1f", roundMeters(meters));
+    }
+
+    private record CenterDistance(Center center, double distanceMeters) {
+        boolean withinRadius() {
+            return distanceMeters <= center.getRadiusInMeters();
+        }
+
+        double distanceOutsideRadius() {
+            return Math.max(0, distanceMeters - center.getRadiusInMeters());
+        }
     }
 }

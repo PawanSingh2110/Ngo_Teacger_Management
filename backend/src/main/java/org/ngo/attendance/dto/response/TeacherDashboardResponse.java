@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.ngo.attendance.entity.AttendanceSessionStatus;
 import org.ngo.attendance.entity.AttendanceStatus;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 public class TeacherDashboardResponse {
     private String teacherName;
     private AttendanceStatus todayStatus;
+    private AttendanceSessionStatus todaySessionStatus;
     private String todayLoginTime;
     private long totalPresent;
     private long totalAbsent;

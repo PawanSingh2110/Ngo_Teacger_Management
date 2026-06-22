@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.ngo.attendance.util.AppClock;
 
 import java.time.LocalDateTime;
 
@@ -19,7 +20,7 @@ public class ApiResponse<T> {
     private T data;
 
     @Builder.Default
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime timestamp = AppClock.now();
 
     public static <T> ApiResponse<T> success(String message, T data) {
         return ApiResponse.<T>builder()

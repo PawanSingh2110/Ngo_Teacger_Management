@@ -21,6 +21,7 @@ import {
   Menu as MenuIcon,
   Logout,
   LocationOn,
+  ExitToApp,
 } from '@mui/icons-material'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
@@ -37,6 +38,11 @@ const navItems = [
     label: 'Mark Attendance',
     path: '/teacher/attendance',
     icon: <LocationOn />,
+  },
+  {
+    label: 'Logout Attendance',
+    path: '/teacher/logout-attendance',
+    icon: <ExitToApp />,
   },
   {
     label: 'History',

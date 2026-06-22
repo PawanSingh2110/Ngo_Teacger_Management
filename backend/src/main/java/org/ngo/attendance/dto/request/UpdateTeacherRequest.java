@@ -21,4 +21,5 @@ public class UpdateTeacherRequest {
     // Admin can update these, teacher cannot
     private Set<UUID> centerIds;
     private Set<UUID> programIds;
+    private UUID shiftId;
 }

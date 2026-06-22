@@ -92,6 +92,7 @@ export default function AdminAttendance() {
   const [filters, setFilters] = useState({
     teacherId: '',
     centerId: '',
+    shiftId: '',
     status: '',
     fromDate: '',
     toDate: '',
@@ -111,8 +112,14 @@ export default function AdminAttendance() {
     queryFn: () => adminApi.getTeachers({ size: 200 }),
   })
 
+  const { data: shiftsData } = useQuery({
+    queryKey: ['shifts-list'],
+    queryFn: () => adminApi.getShifts(),
+  })
+
   const centers = centersData?.data?.data || []
   const teachers = teachersData?.data?.data?.content || []
+  const shifts = shiftsData?.data?.data || []
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin-attendance', applied, page],
@@ -152,6 +159,7 @@ export default function AdminAttendance() {
     setFilters({
       teacherId: '',
       centerId: '',
+      shiftId: '',
       status: '',
       fromDate: '',
       toDate: '',
@@ -292,6 +300,24 @@ export default function AdminAttendance() {
                 onChange={(_, center) => setFilters({ ...filters, centerId: center?.id || '' })}
                 renderInput={(params) => <TextField {...params} label="Center" placeholder="All Centers" />}
               />
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Shift</InputLabel>
+                <Select
+                  value={filters.shiftId}
+                  label="Shift"
+                  onChange={(e) => setFilters({ ...filters, shiftId: e.target.value })}
+                >
+                  <MenuItem value="">All Shifts</MenuItem>
+                  {shifts.map((shift) => (
+                    <MenuItem key={shift.id} value={shift.id}>
+                      {shift.shiftName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
 
             <Grid item xs={12} sm={6} md={2}>
@@ -438,7 +464,7 @@ export default function AdminAttendance() {
             },
           }}
         >
-          <Table stickyHeader sx={{ minWidth: 1200 }}>
+          <Table stickyHeader sx={{ minWidth: 1650 }}>
             <TableHead>
               <TableRow
                 sx={{
@@ -453,9 +479,13 @@ export default function AdminAttendance() {
               >
                 <TableCell width={60}>#</TableCell>
                 <TableCell width={260}>Teacher</TableCell>
+                <TableCell width={170}>Shift</TableCell>
                 <TableCell width={220}>Center</TableCell>
                 <TableCell width={180}>Date</TableCell>
                 <TableCell width={160}>Login Time</TableCell>
+                <TableCell width={160}>Logout Time</TableCell>
+                <TableCell width={150}>Punctuality</TableCell>
+                <TableCell width={190}>Logout Location</TableCell>
                 <TableCell width={120}>Status</TableCell>
               </TableRow>
             </TableHead>
@@ -463,7 +493,7 @@ export default function AdminAttendance() {
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={28} sx={{ color: theme.primaryGreen }} />
                   </TableCell>
                 </TableRow>
@@ -471,7 +501,7 @@ export default function AdminAttendance() {
 
               {error && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                     <Alert severity="error" sx={{ display: 'inline-flex' }}>
                       {error.response?.data?.message || error.message || 'Failed to load attendance records'}
                     </Alert>
@@ -481,7 +511,7 @@ export default function AdminAttendance() {
 
               {!isLoading && !error && records.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">No records found. Adjust filters.</Typography>
                   </TableCell>
                 </TableRow>
@@ -504,12 +534,58 @@ export default function AdminAttendance() {
                       {r.teacherName}
                     </Typography>
                   </TableCell>
+                  <TableCell sx={{ color: theme.primaryText }}>{r.shiftName || '-'}</TableCell>
                   <TableCell sx={{ color: theme.primaryText }}>{r.centerName || '—'}</TableCell>
                   <TableCell sx={{ color: theme.primaryText }}>
                     {r.attendanceDate ? dayjs(r.attendanceDate).format('DD MMM YYYY') : '—'}
                   </TableCell>
                   <TableCell sx={{ color: theme.primaryText }}>
                     {r.loginTime ? dayjs(r.loginTime).format('hh:mm A') : '—'}
+                  </TableCell>
+                  <TableCell sx={{ color: theme.primaryText }}>
+                    {r.logoutTime ? dayjs(r.logoutTime).format('hh:mm A') : '—'}
+                  </TableCell>
+                  <TableCell>
+                    {r.status === 'PRESENT' ? (
+                      <Chip
+                        label={r.late ? `Late by ${r.lateByMinutes || 0} min` : 'On time'}
+                        size="small"
+                        sx={{
+                          bgcolor: r.late ? '#FFF7ED' : theme.lightGreenBackground,
+                          color: r.late ? '#C2410C' : theme.primaryGreen,
+                          fontWeight: 600,
+                        }}
+                      />
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={
+                        r.logoutWithinRadius == null
+                          ? 'Not marked'
+                          : r.logoutWithinRadius
+                            ? 'Inside radius'
+                            : 'Outside radius'
+                      }
+                      size="small"
+                      sx={{
+                        backgroundColor:
+                          r.logoutWithinRadius == null
+                            ? theme.grayBackground
+                            : r.logoutWithinRadius
+                              ? theme.lightGreenBackground
+                              : theme.redBackground,
+                        color:
+                          r.logoutWithinRadius == null
+                            ? theme.secondaryText
+                            : r.logoutWithinRadius
+                              ? theme.primaryGreen
+                              : theme.redAccent,
+                        fontWeight: 600,
+                      }}
+                    />
                   </TableCell>
                   <TableCell>
                     <Chip

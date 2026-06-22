@@ -98,6 +98,18 @@ public interface AttendanceRepository extends JpaRepository<Attendance, UUID>, J
     """)
     List<Attendance> findTodayAttendance(@Param("date") LocalDate date);
 
+    @Query("""
+        SELECT a FROM Attendance a
+        JOIN FETCH a.teacher t
+        JOIN FETCH a.shift s
+        LEFT JOIN FETCH a.center c
+        WHERE a.attendanceDate <= :date
+        AND a.logoutTime IS NULL
+        AND a.status = 'PRESENT'
+        AND a.sessionStatus = 'OPEN'
+    """)
+    List<Attendance> findOpenSessionsOnOrBefore(@Param("date") LocalDate date);
+
     // Monthly aggregate per center
     @Query("""
         SELECT
