@@ -88,9 +88,9 @@ export default function TeacherDashboard() {
   )
 
   return (
-    <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
+    <Box sx={{ maxWidth: 1100, mx: 'auto', width: '100%', overflowX: 'hidden' }}>
       <Box sx={{ mb: 2 }}>
-        <Typography variant="h4" fontWeight={700}>
+        <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           My Dashboard
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -110,9 +110,9 @@ export default function TeacherDashboard() {
         }}
       >
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
             {bannerIcon}
-            <Box sx={{ flex: 1 }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography variant="h6" fontWeight={700}>
                 {isPresent
                   ? 'Present Today ✓'
@@ -220,7 +220,7 @@ export default function TeacherDashboard() {
                       <Typography variant="subtitle2" fontWeight={600}>
                         {month.monthName} {month.year}
                       </Typography>
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
                         <Chip
                           label={`✓ ${month.presentCount}`}
                           size="small"

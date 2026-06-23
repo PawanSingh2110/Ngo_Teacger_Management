@@ -117,7 +117,7 @@ export default function LogoutAttendancePage() {
   return (
     <Box sx={{ width: '100%', overflowX: 'hidden' }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} color={theme.primaryText}>
+        <Typography variant="h4" fontWeight={700} color={theme.primaryText} sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           Logout Attendance
         </Typography>
         <Typography sx={{ color: theme.secondaryText, mt: 0.5 }}>
@@ -140,8 +140,9 @@ export default function LogoutAttendancePage() {
             bgcolor: theme.surface,
             borderBottom: `1px solid ${theme.borderColor}`,
             display: 'flex',
-            alignItems: 'center',
+            alignItems: { xs: 'stretch', sm: 'center' },
             justifyContent: 'space-between',
+            flexDirection: { xs: 'column', sm: 'row' },
             gap: 2,
             flexWrap: 'wrap',
           }}
@@ -226,6 +227,7 @@ export default function LogoutAttendancePage() {
                   sx={{
                     bgcolor: theme.primaryGreen,
                     fontWeight: 600,
+                    width: { xs: '100%', sm: 'auto' },
                     '&:hover': { bgcolor: theme.darkGreenHover },
                   }}
                 >

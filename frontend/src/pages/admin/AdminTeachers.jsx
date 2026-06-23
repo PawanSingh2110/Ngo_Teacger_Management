@@ -195,9 +195,11 @@ export default function AdminTeachers() {
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: { xs: 'stretch', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
           mb: 3,
-          p: 2.5,
+          p: { xs: 2, sm: 2.5 },
           borderRadius: 3,
           bgcolor: theme.lightGreenBackground,
           border: `1px solid ${theme.borderColor}`,
@@ -210,6 +212,7 @@ export default function AdminTeachers() {
               fontWeight: 700,
               color: theme.primaryText,
               mb: 0.5,
+              fontSize: { xs: '1.75rem', sm: '2.125rem' },
             }}
           >
             Teachers
@@ -231,6 +234,7 @@ export default function AdminTeachers() {
             py: 1.2,
             borderRadius: 2,
             boxShadow: 'none',
+            width: { xs: '100%', sm: 'auto' },
             '&:hover': {
               bgcolor: theme.darkGreenHover,
               boxShadow: 'none',
@@ -292,7 +296,7 @@ export default function AdminTeachers() {
           overflow: 'hidden',
         }}
       >
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={8}>
               <TextField
@@ -394,7 +398,7 @@ export default function AdminTeachers() {
         <TableContainer
           sx={{
             height: 600,
-            maxHeight: 600,
+            maxHeight: { xs: '68vh', md: 600 },
             overflowY: 'auto',
             overflowX: 'auto',
             '&::-webkit-scrollbar': {
@@ -413,7 +417,7 @@ export default function AdminTeachers() {
             },
           }}
         >
-          <Table stickyHeader sx={{ minWidth: 1350 }}>
+          <Table stickyHeader sx={{ minWidth: { xs: 980, md: 1350 } }}>
             <TableHead>
               <TableRow
                 sx={{
@@ -488,7 +492,7 @@ export default function AdminTeachers() {
                   <TableCell>{(page - 1) * 15 + i + 1}</TableCell>
 
                   <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
                       <Avatar
                         sx={{
                           width: 36,
@@ -501,11 +505,11 @@ export default function AdminTeachers() {
                       >
                         {t.fullName?.[0]}
                       </Avatar>
-                      <Box>
+                      <Box sx={{ minWidth: 0 }}>
                         <Typography variant="body2" fontWeight={600} sx={{ color: theme.primaryText }}>
                           {t.fullName}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: theme.secondaryText }}>
+                        <Typography variant="caption" sx={{ color: theme.secondaryText, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {t.email}
                         </Typography>
                       </Box>

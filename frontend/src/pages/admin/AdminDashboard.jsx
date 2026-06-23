@@ -123,6 +123,8 @@ export default function AdminDashboard() {
       sx={{
         maxWidth: 1400,
         mx: "auto",
+        width: "100%",
+        overflowX: "hidden",
       }}
     >
       {/* Header */}
@@ -133,6 +135,7 @@ export default function AdminDashboard() {
           sx={{
             color: "#1F2937",
             mb: 0.5,
+            fontSize: { xs: "1.75rem", sm: "2.125rem" },
           }}
         >
           Dashboard
@@ -212,7 +215,9 @@ export default function AdminDashboard() {
             bgcolor: "#F8FAF8",
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
+            alignItems: { xs: "stretch", sm: "center" },
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 1.5,
           }}
         >
           <Typography variant="h6" fontWeight={600} color="#1F2937">
@@ -233,10 +238,12 @@ export default function AdminDashboard() {
         <TableContainer
           sx={{
             height: 350,
+            maxHeight: { xs: "62vh", md: 350 },
             overflow: "auto",
 
             "&::-webkit-scrollbar": {
               width: 8,
+              height: 8,
             },
 
             "&::-webkit-scrollbar-thumb": {
@@ -245,7 +252,7 @@ export default function AdminDashboard() {
             },
           }}
         >
-          <Table stickyHeader size="small">
+          <Table stickyHeader size="small" sx={{ minWidth: { xs: 680, md: 850 } }}>
             <TableHead>
               <TableRow
                 sx={{

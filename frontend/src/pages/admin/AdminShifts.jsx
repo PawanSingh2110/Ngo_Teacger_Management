@@ -92,9 +92,9 @@ export default function AdminShifts() {
   }
 
   return (
-    <Box sx={{ maxWidth: 1100 }}>
+    <Box sx={{ maxWidth: 1100, width: '100%', overflowX: 'hidden' }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight={700}>
+        <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           Shifts
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -103,7 +103,7 @@ export default function AdminShifts() {
       </Box>
 
       <Card sx={{ borderRadius: 3, boxShadow: 'none', border: '1px solid #E8F5E9' }}>
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Schedule color="success" />
             <Typography variant="h6" fontWeight={700}>
@@ -111,7 +111,7 @@ export default function AdminShifts() {
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1fr auto' }, gap: 2, mb: 3 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '2fr 1fr 1fr auto' }, gap: 2, mb: 3 }}>
             <TextField
               label="Shift Name"
               value={shiftForm.shiftName}
@@ -131,26 +131,27 @@ export default function AdminShifts() {
               onChange={(e) => setShiftForm((prev) => ({ ...prev, endTime: e.target.value }))}
               InputLabelProps={{ shrink: true }}
             />
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
               <Button
                 variant="contained"
                 color="success"
                 startIcon={saveShift.isPending ? <CircularProgress size={14} color="inherit" /> : editing ? <Save /> : <Add />}
                 onClick={handleSave}
                 disabled={saveShift.isPending}
+                sx={{ flex: { xs: '1 1 140px', lg: '0 0 auto' } }}
               >
                 {editing ? 'Update' : 'Add'}
               </Button>
               {editing && (
-                <Button onClick={resetForm}>
+                <Button onClick={resetForm} sx={{ flex: { xs: '1 1 120px', lg: '0 0 auto' } }}>
                   Cancel
                 </Button>
               )}
             </Box>
           </Box>
 
-          <TableContainer>
-            <Table size="small">
+          <TableContainer sx={{ overflowX: 'auto' }}>
+            <Table size="small" sx={{ minWidth: 520 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Shift</TableCell>

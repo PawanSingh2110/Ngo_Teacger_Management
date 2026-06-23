@@ -45,7 +45,7 @@ export default function AdminSettings() {
   }
 
   return (
-    <Box sx={{ maxWidth: 980 }}>
+    <Box sx={{ maxWidth: 980, width: '100%' }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" fontWeight={700}>
           Settings
@@ -56,7 +56,7 @@ export default function AdminSettings() {
       </Box>
 
       <Card sx={{ borderRadius: 3, boxShadow: 'none', border: '1px solid #E8F5E9' }}>
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Lock color="success" />
             <Typography variant="h6" fontWeight={700}>
@@ -89,7 +89,7 @@ export default function AdminSettings() {
             />
           </Box>
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' }, mt: 3 }}>
             <Button
               variant="contained"
               color="success"
@@ -98,6 +98,7 @@ export default function AdminSettings() {
               disabled={
                 isPending || !form.currentPassword || !form.newPassword || !form.confirmPassword
               }
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Update Password
             </Button>

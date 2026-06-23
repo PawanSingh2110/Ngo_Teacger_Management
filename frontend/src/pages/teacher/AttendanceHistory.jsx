@@ -86,7 +86,7 @@ export default function AttendanceHistory() {
   return (
     <Box sx={{ width: '100%', overflowX: 'hidden' }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} color="#1F2937">
+        <Typography variant="h4" fontWeight={700} color="#1F2937" sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           Attendance History
         </Typography>
 
@@ -100,7 +100,7 @@ export default function AttendanceHistory() {
         </Typography>
       </Box>
 
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4 }}>
         <Grid item xs={12} md={4}>
           <StatCard
             title="Total Records"
@@ -160,10 +160,11 @@ export default function AttendanceHistory() {
         <TableContainer
           sx={{
             height: 550,
+            maxHeight: { xs: '68vh', md: 550 },
             overflow: 'auto',
           }}
         >
-          <Table stickyHeader>
+          <Table stickyHeader sx={{ minWidth: { xs: 900, md: 1080 } }}>
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 700, bgcolor: '#F1F8F4' } }}>
                 <TableCell>#</TableCell>

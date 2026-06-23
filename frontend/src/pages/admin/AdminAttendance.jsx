@@ -181,16 +181,18 @@ export default function AdminAttendance() {
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: { xs: 'stretch', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
           mb: 3,
-          p: 2.5,
+          p: { xs: 2, sm: 2.5 },
           borderRadius: 3,
           bgcolor: theme.lightGreenBackground,
           border: `1px solid ${theme.borderColor}`,
         }}
       >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: theme.primaryText, mb: 0.5 }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: theme.primaryText, mb: 0.5, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
             Attendance Records
           </Typography>
           <Typography variant="body2" sx={{ color: theme.secondaryText }}>
@@ -211,6 +213,7 @@ export default function AdminAttendance() {
             py: 1.2,
             borderRadius: 2,
             boxShadow: 'none',
+            width: { xs: '100%', sm: 'auto' },
             '&:hover': {
               bgcolor: theme.darkGreenHover,
               boxShadow: 'none',
@@ -269,7 +272,7 @@ export default function AdminAttendance() {
           overflow: 'hidden',
         }}
       >
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
           <Typography
             variant="subtitle2"
             sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 0.5, color: theme.primaryText }}
@@ -385,11 +388,12 @@ export default function AdminAttendance() {
               />
             </Grid>
 
-            <Grid item xs={12} sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <Grid item xs={12} sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'stretch', sm: 'flex-end' }, flexWrap: 'wrap' }}>
               <Button
                 onClick={clearFilters}
                 variant="outlined"
                 sx={{
+                  flex: { xs: '1 1 140px', sm: '0 0 auto' },
                   borderColor: theme.borderColor,
                   color: theme.primaryText,
                   fontWeight: 600,
@@ -405,6 +409,7 @@ export default function AdminAttendance() {
                 onClick={applyFilters}
                 variant="contained"
                 sx={{
+                  flex: { xs: '1 1 140px', sm: '0 0 auto' },
                   bgcolor: theme.primaryGreen,
                   color: 'white',
                   fontWeight: 600,
@@ -445,7 +450,7 @@ export default function AdminAttendance() {
         <TableContainer
           sx={{
             height: 500,
-            maxHeight: 500,
+            maxHeight: { xs: '68vh', md: 500 },
             overflowY: 'auto',
             overflowX: 'auto',
             '&::-webkit-scrollbar': {
@@ -464,7 +469,7 @@ export default function AdminAttendance() {
             },
           }}
         >
-          <Table stickyHeader sx={{ minWidth: 1650 }}>
+          <Table stickyHeader sx={{ minWidth: { xs: 1080, md: 1650 } }}>
             <TableHead>
               <TableRow
                 sx={{

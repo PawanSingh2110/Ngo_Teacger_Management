@@ -423,14 +423,22 @@ export default function AdminCenters() {
   }
 
   return (
-    <Box>
+    <Box sx={{ width: '100%', overflowX: 'hidden' }}>
       {/* Header */}
       <Box
         sx={{
           display: 'flex',
           justifyContent:
             'space-between',
-          alignItems: 'center',
+          alignItems: {
+            xs: 'stretch',
+            sm: 'center',
+          },
+          flexDirection: {
+            xs: 'column',
+            sm: 'row',
+          },
+          gap: 2,
           mb: 4,
         }}
       >
@@ -466,6 +474,10 @@ export default function AdminCenters() {
             bgcolor: '#2E7D32',
             borderRadius: 3,
             textTransform: 'none',
+            width: {
+              xs: '100%',
+              sm: 'auto',
+            },
 
             '&:hover': {
               bgcolor:
@@ -533,11 +545,16 @@ export default function AdminCenters() {
         <TableContainer
           sx={{
             height: 500,
+            maxHeight: {
+              xs: '68vh',
+              md: 500,
+            },
             overflow: 'auto',
 
             '&::-webkit-scrollbar':
               {
-                width: 8,
+              width: 8,
+              height: 8,
               },
 
             '&::-webkit-scrollbar-thumb':
@@ -548,7 +565,7 @@ export default function AdminCenters() {
               },
           }}
         >
-          <Table stickyHeader>
+          <Table stickyHeader sx={{ minWidth: { xs: 820, md: 980 } }}>
             <TableHead>
               <TableRow
                 sx={{

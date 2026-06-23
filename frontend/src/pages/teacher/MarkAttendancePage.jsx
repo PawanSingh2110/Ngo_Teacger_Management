@@ -399,7 +399,7 @@ export default function MarkAttendancePage() {
     return (
       <Box sx={{ width: '100%', overflowX: 'hidden' }}>
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" fontWeight={700} color={theme.primaryText}>
+          <Typography variant="h4" fontWeight={700} color={theme.primaryText} sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
             Mark Attendance
           </Typography>
           <Typography sx={{ color: theme.secondaryText, mt: 0.5 }}>
@@ -496,7 +496,7 @@ export default function MarkAttendancePage() {
     return (
       <Box sx={{ width: '100%', overflowX: 'hidden' }}>
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" fontWeight={700} color={theme.primaryText}>
+          <Typography variant="h4" fontWeight={700} color={theme.primaryText} sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
             Mark Attendance
           </Typography>
           <Typography sx={{ color: theme.secondaryText, mt: 0.5 }}>
@@ -573,7 +573,7 @@ export default function MarkAttendancePage() {
   return (
     <Box sx={{ width: '100%', overflowX: 'hidden' }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} color={theme.primaryText}>
+        <Typography variant="h4" fontWeight={700} color={theme.primaryText} sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           Mark Attendance
         </Typography>
         <Typography sx={{ color: theme.secondaryText, mt: 0.5 }}>
@@ -582,7 +582,7 @@ export default function MarkAttendancePage() {
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard
             title="Step"
             value={`${step + 1} / 3`}
@@ -591,7 +591,7 @@ export default function MarkAttendancePage() {
             iconColor="#4F46E5"
           />
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard
             title="Location"
             value={coords ? 'Captured' : 'Pending'}
@@ -600,7 +600,7 @@ export default function MarkAttendancePage() {
             iconColor={coords ? theme.primaryGreen : theme.blueAccent}
           />
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard
             title="Status"
             value={todayRecord ? 'Done' : 'Ready'}
@@ -635,7 +635,7 @@ export default function MarkAttendancePage() {
           </Typography>
         </Box>
 
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
           <Stepper activeStep={step} sx={{ mb: 4 }}>
             {STEPS.map((label) => (
               <Step key={label}>

@@ -288,7 +288,11 @@ export default function TeacherLayout() {
           sx={{
             '& .MuiDrawer-paper':
               {
-                width:
+                width: {
+                  xs: '86vw',
+                  sm: DRAWER_WIDTH,
+                },
+                maxWidth:
                   DRAWER_WIDTH,
                 borderRight:
                   '1px solid #E8F5E9',
@@ -324,6 +328,7 @@ export default function TeacherLayout() {
         component="main"
         sx={{
           flexGrow: 1,
+          minWidth: 0,
           minHeight: '100vh',
           bgcolor: '#F9FAFB',
         }}
@@ -369,9 +374,13 @@ export default function TeacherLayout() {
         <Box
           sx={{
             p: {
-              xs: 2,
+              xs: 1.5,
+              sm: 2,
               md: 3,
             },
+            width: '100%',
+            maxWidth: '100%',
+            overflowX: 'hidden',
           }}
         >
           <Outlet />

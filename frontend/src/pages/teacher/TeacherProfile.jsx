@@ -80,9 +80,9 @@ export default function TeacherProfile() {
   const firstLetter = profile?.fullName?.[0]?.toUpperCase() || ''
 
   return (
-    <Box sx={{ maxWidth: 900, mx: 'auto' }}>
+    <Box sx={{ maxWidth: 900, mx: 'auto', width: '100%', overflowX: 'hidden' }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight={700}>
+        <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           My Profile
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -98,18 +98,19 @@ export default function TeacherProfile() {
           bgcolor: '#F9FAFB',
         }}
       >
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
           {/* Header */}
           <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
+              alignItems: { xs: 'stretch', sm: 'center' },
               justifyContent: 'space-between',
+              flexDirection: { xs: 'column', sm: 'row' },
               mb: 3,
               gap: 2,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
               <Avatar
                 sx={{
                   width: 56,
@@ -121,11 +122,11 @@ export default function TeacherProfile() {
               >
                 {firstLetter || <Person />}
               </Avatar>
-              <Box>
+              <Box sx={{ minWidth: 0 }}>
                 <Typography variant="h6" fontWeight={700}>
                   {profile?.fullName}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
                   {profile?.email}
                 </Typography>
               </Box>
@@ -137,6 +138,7 @@ export default function TeacherProfile() {
                 onClick={() => setEditing(true)}
                 variant="outlined"
                 size="small"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Edit Name
               </Button>
@@ -158,11 +160,12 @@ export default function TeacherProfile() {
           >
             <SingleLineRow label="Full Name">
               {editing ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                   <TextField
                     size="small"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
+                    sx={{ flex: { xs: '1 1 100%', sm: '0 1 240px' } }}
                   />
                   <Button
                     variant="contained"
@@ -293,7 +296,7 @@ export default function TeacherProfile() {
               />
             </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' }, mt: 2 }}>
               <Button
                 variant="contained"
                 color="success"
@@ -307,6 +310,7 @@ export default function TeacherProfile() {
                   !passwordForm.newPassword ||
                   !passwordForm.confirmPassword
                 }
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Update Password
               </Button>
@@ -323,7 +327,8 @@ function SingleLineRow({ label, children, readOnly, last }) {
     <Box
       sx={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        flexDirection: { xs: 'column', sm: 'row' },
         gap: 2,
         justifyContent: 'space-between',
         px: 2,
@@ -347,7 +352,7 @@ function SingleLineRow({ label, children, readOnly, last }) {
           />
         )}
       </Box>
-      <Box sx={{ flex: 1, textAlign: 'right' }}>{children}</Box>
+      <Box sx={{ flex: 1, textAlign: { xs: 'left', sm: 'right' }, minWidth: 0, width: '100%', '& .MuiChip-root': { mb: 0.5 } }}>{children}</Box>
     </Box>
   )
 }

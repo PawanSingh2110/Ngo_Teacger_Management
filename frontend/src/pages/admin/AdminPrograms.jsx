@@ -329,14 +329,22 @@ export default function AdminPrograms() {
   }
 
   return (
-    <Box>
+    <Box sx={{ width: '100%', overflowX: 'hidden' }}>
       {/* Header */}
       <Box
         sx={{
           display: 'flex',
           justifyContent:
             'space-between',
-          alignItems: 'center',
+          alignItems: {
+            xs: 'stretch',
+            sm: 'center',
+          },
+          flexDirection: {
+            xs: 'column',
+            sm: 'row',
+          },
+          gap: 2,
           mb: 4,
         }}
       >
@@ -373,6 +381,10 @@ export default function AdminPrograms() {
             borderRadius: 3,
             textTransform:
               'none',
+            width: {
+              xs: '100%',
+              sm: 'auto',
+            },
 
             '&:hover': {
               bgcolor:
@@ -444,11 +456,16 @@ export default function AdminPrograms() {
         <TableContainer
           sx={{
             height: 500,
+            maxHeight: {
+              xs: '68vh',
+              md: 500,
+            },
             overflow: 'auto',
 
             '&::-webkit-scrollbar':
               {
                 width: 8,
+                height: 8,
               },
 
             '&::-webkit-scrollbar-thumb':
@@ -459,7 +476,7 @@ export default function AdminPrograms() {
               },
           }}
         >
-          <Table stickyHeader>
+          <Table stickyHeader sx={{ minWidth: { xs: 720, md: 900 } }}>
             <TableHead>
               <TableRow
                 sx={{
