@@ -124,7 +124,7 @@ export default function TeacherForm({ teacher, onSuccess, onCancel }) {
                 onChange={(e) => setForm({ ...form, shiftId: e.target.value })}
                 input={<OutlinedInput label="Assign Shift" />}
               >
-                <MenuItem value="">No shift assigned</MenuItem>
+                <MenuItem value="">No Assign (Unassigned)</MenuItem>
                 {shiftsLoading ? (
                   <MenuItem disabled>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -150,14 +150,26 @@ export default function TeacherForm({ teacher, onSuccess, onCancel }) {
               <Select
                 multiple
                 value={form.centerIds}
-                onChange={(e) => setForm({ ...form, centerIds: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value
+                  // If 'NO_ASSIGN' is selected, clear all selections
+                  if (value.includes('NO_ASSIGN')) {
+                    setForm({ ...form, centerIds: [] })
+                  } else {
+                    setForm({ ...form, centerIds: value })
+                  }
+                }}
                 input={<OutlinedInput label="Assign Centers" />}
                 renderValue={(selected) =>
                   selected.length > 0
                     ? centers.filter(c => selected.includes(c.id)).map(c => c.centerName).join(', ')
-                    : 'Select centers...'
+                    : 'No Assign'
                 }
               >
+                <MenuItem value="NO_ASSIGN">
+                  <Checkbox checked={form.centerIds.length === 0} />
+                  <ListItemText primary="No Assign (Unassigned)" secondary="Click to clear all centers" />
+                </MenuItem>
                 {centersLoading ? (
                   <MenuItem disabled>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -184,14 +196,26 @@ export default function TeacherForm({ teacher, onSuccess, onCancel }) {
               <Select
                 multiple
                 value={form.programIds}
-                onChange={(e) => setForm({ ...form, programIds: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value
+                  // If 'NO_ASSIGN' is selected, clear all selections
+                  if (value.includes('NO_ASSIGN')) {
+                    setForm({ ...form, programIds: [] })
+                  } else {
+                    setForm({ ...form, programIds: value })
+                  }
+                }}
                 input={<OutlinedInput label="Assign Programs" />}
                 renderValue={(selected) =>
                   selected.length > 0
                     ? programs.filter(p => selected.includes(p.id)).map(p => p.programName).join(', ')
-                    : 'Select programs...'
+                    : 'No Assign'
                 }
               >
+                <MenuItem value="NO_ASSIGN">
+                  <Checkbox checked={form.programIds.length === 0} />
+                  <ListItemText primary="No Assign (Unassigned)" secondary="Click to clear all programs" />
+                </MenuItem>
                 {programsLoading ? (
                   <MenuItem disabled>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

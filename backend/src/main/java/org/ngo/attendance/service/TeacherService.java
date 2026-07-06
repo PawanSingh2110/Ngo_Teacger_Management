@@ -100,9 +100,16 @@ public class TeacherService {
         if (request.getFullName() != null) teacher.setFullName(request.getFullName());
         if (request.getPhoneNumber() != null) teacher.setPhoneNumber(request.getPhoneNumber());
         if (request.getActive() != null) teacher.setActive(request.getActive());
+        
+        // For admin updates, these fields are always sent and should be processed even if null
         if (request.getCenterIds() != null) assignCenters(teacher, request.getCenterIds());
         if (request.getProgramIds() != null) assignPrograms(teacher, request.getProgramIds());
-        if (request.getShiftId() != null) assignShift(teacher, request.getShiftId());
+        
+        // If centerIds or programIds are being updated, shiftId is also expected to be processed
+        // This allows clearing the shift by sending null
+        if (request.getCenterIds() != null || request.getProgramIds() != null || request.getShiftId() != null) {
+            assignShift(teacher, request.getShiftId());
+        }
 
         return toResponse(teacherRepository.save(teacher));
     }
