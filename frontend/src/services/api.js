@@ -1,10 +1,21 @@
 import axios from 'axios'
 
+const TOKEN_KEY = 'ngo_token'
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 })
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(TOKEN_KEY)
+  if (token) {
+    config.headers = config.headers || {}
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+}, (error) => Promise.reject(error))
 
 // Handle 401 globally
 api.interceptors.response.use(
@@ -12,7 +23,7 @@ api.interceptors.response.use(
   (error) => {
     const isLoginRequest = error.config?.url?.includes('/auth/login')
     if (error.response?.status === 401 && !isLoginRequest) {
-      localStorage.removeItem('ngo_token')
+      localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem('ngo_user')
       if (window.location.pathname !== '/login') {
         window.location.assign('/login')

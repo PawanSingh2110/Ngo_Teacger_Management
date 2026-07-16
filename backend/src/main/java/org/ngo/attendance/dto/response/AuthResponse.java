@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AuthResponse {
-    @JsonIgnore
     private String accessToken;
     @JsonIgnore
     @Builder.Default
