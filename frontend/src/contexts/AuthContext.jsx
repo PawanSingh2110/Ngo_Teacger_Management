@@ -6,6 +6,8 @@ const AuthContext = createContext(null)
 const USER_KEY  = 'ngo_user'
 
 function readStoredSession() {
+  // Ensure any legacy token stored in localStorage is removed on startup.
+  try { localStorage.removeItem('ngo_token') } catch {}
   try {
     const user = JSON.parse(localStorage.getItem(USER_KEY))
 
@@ -16,7 +18,6 @@ function readStoredSession() {
   } catch {
     // Invalid stored user data is cleared below.
   }
-  localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USER_KEY)
   return { token: null, user: null }
 }
