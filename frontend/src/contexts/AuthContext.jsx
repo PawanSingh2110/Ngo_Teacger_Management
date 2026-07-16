@@ -4,24 +4,18 @@ import { authApi } from '../services/apiServices'
 const AuthContext = createContext(null)
 
 const USER_KEY  = 'ngo_user'
-const TOKEN_KEY = 'ngo_token'
 
 function readStoredSession() {
   try {
     const user = JSON.parse(localStorage.getItem(USER_KEY))
-    const storedToken = localStorage.getItem(TOKEN_KEY)
-
-    if (user?.role && storedToken) {
-      return { token: storedToken, user }
-    }
 
     if (user?.role) {
+      // Token is cookie-based on the server; indicate cookie mode to consumers.
       return { token: 'cookie', user }
     }
   } catch {
     // Invalid stored user data is cleared below.
   }
-
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USER_KEY)
   return { token: null, user: null }
@@ -33,14 +27,7 @@ export function AuthProvider({ children }) {
   const { token, user } = session
 
   const login = useCallback((authResponse) => {
-    const accessToken = authResponse?.accessToken || null
-
-    if (accessToken) {
-      localStorage.setItem(TOKEN_KEY, accessToken)
-    } else {
-      localStorage.removeItem(TOKEN_KEY)
-    }
-
+    // Server sets HttpOnly cookie; do not persist access token in localStorage.
     localStorage.setItem(USER_KEY, JSON.stringify({
       userId:   authResponse.userId,
       email:    authResponse.email,
@@ -48,20 +35,17 @@ export function AuthProvider({ children }) {
       role:     authResponse.role,
     }))
 
-    setSession({
-      token: accessToken || 'cookie',
-      user: {
-        userId:   authResponse.userId,
-        email:    authResponse.email,
-        fullName: authResponse.fullName,
-        role:     authResponse.role,
-      },
-    })
+    setSession({ token: 'cookie', user: {
+      userId:   authResponse.userId,
+      email:    authResponse.email,
+      fullName: authResponse.fullName,
+      role:     authResponse.role,
+    } })
   }, [])
 
   const logout = useCallback(() => {
     authApi.logout().catch(() => {})
-    localStorage.removeItem(TOKEN_KEY)
+    // Token is cleared server-side via cookie; remove local user cache only.
     localStorage.removeItem(USER_KEY)
     setSession({ token: null, user: null })
   }, [])
