@@ -21,8 +21,8 @@ public class JwtUtil {
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
-//    @Value("${app.jwt.access-token-expiry-ms}")
-    private long accessTokenExpiryMs =86400000;
+   @Value("${app.jwt.access-token-expiry-ms}")
+    private long accessTokenExpiryMs;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes;
