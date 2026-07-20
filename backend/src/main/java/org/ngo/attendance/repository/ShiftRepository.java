@@ -11,5 +11,5 @@ import java.util.UUID;
 public interface ShiftRepository extends JpaRepository<Shift, UUID> {
     boolean existsByShiftNameIgnoreCase(String shiftName);
 
-    List<Shift> findAllByOrderByStartTimeAsc();
+    List<Shift> findAllByOrderByCreatedAtAsc();
 }

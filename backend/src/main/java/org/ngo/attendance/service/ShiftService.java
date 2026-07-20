@@ -21,7 +21,7 @@ public class ShiftService {
     private final ShiftRepository shiftRepository;
 
     public List<ShiftResponse> getAllShifts() {
-        return shiftRepository.findAllByOrderByStartTimeAsc().stream()
+        return shiftRepository.findAllByOrderByCreatedAtAsc().stream()
                 .map(this::toResponse)
                 .toList();
     }
