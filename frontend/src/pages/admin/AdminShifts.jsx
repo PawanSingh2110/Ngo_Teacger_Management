@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Card,
-  CardContent,
   CircularProgress,
   IconButton,
   Table,
@@ -17,7 +16,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { Add, Delete, Edit, Save, Schedule } from '@mui/icons-material'
+import { Add, Delete, Edit, Save } from '@mui/icons-material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { adminApi } from '../../services/apiServices'
@@ -92,127 +91,149 @@ export default function AdminShifts() {
   }
 
   return (
-    <Box sx={{ maxWidth: 1100, width: '100%', overflowX: 'hidden' }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
-          Shifts
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Create and manage attendance shift timings.
-        </Typography>
+    <Box sx={{ width: '100%', overflowX: 'hidden' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 4 }}>
+        <Box>
+          <Typography variant="h4" fontWeight={700} color="#1F2937">
+            Shifts
+          </Typography>
+          <Typography sx={{ color: '#6B7280', mt: 0.5 }}>
+            Manage attendance shift timings and schedule slots
+          </Typography>
+        </Box>
+
+        <Button
+          variant="contained"
+          startIcon={editing ? <Save /> : <Add />}
+          onClick={handleSave}
+          disabled={saveShift.isPending}
+          sx={{
+            bgcolor: '#2E7D32',
+            borderRadius: 3,
+            textTransform: 'none',
+            width: { xs: '100%', sm: 'auto' },
+            '&:hover': { bgcolor: '#1B5E20' },
+          }}
+        >
+          {saveShift.isPending ? <CircularProgress size={20} color="inherit" /> : editing ? 'Update Shift' : 'Add Shift'}
+        </Button>
       </Box>
 
-      <Card sx={{ borderRadius: 3, boxShadow: 'none', border: '1px solid #E8F5E9' }}>
-        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Schedule color="success" />
-            <Typography variant="h6" fontWeight={700}>
-              Shift Details
-            </Typography>
-          </Box>
+      <Card sx={{ borderRadius: 4, border: '1px solid #E8F5E9', overflow: 'hidden', boxShadow: 'none', mb: 3 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 }, borderBottom: '1px solid #E5E7EB' }}>
+          <Typography variant="h6" fontWeight={700} color="#1F2937">
+            {editing ? 'Edit Shift' : 'Create Shift'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Enter the shift name and timing window below.
+          </Typography>
+        </Box>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '2fr 1fr 1fr auto' }, gap: 2, mb: 3 }}>
-            <TextField
-              label="Shift Name"
-              value={shiftForm.shiftName}
-              onChange={(e) => setShiftForm((prev) => ({ ...prev, shiftName: e.target.value }))}
-            />
-            <TextField
-              label="Start Time"
-              type="time"
-              value={shiftForm.startTime}
-              onChange={(e) => setShiftForm((prev) => ({ ...prev, startTime: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              label="End Time"
-              type="time"
-              value={shiftForm.endTime}
-              onChange={(e) => setShiftForm((prev) => ({ ...prev, endTime: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
-            />
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={saveShift.isPending ? <CircularProgress size={14} color="inherit" /> : editing ? <Save /> : <Add />}
-                onClick={handleSave}
-                disabled={saveShift.isPending}
-                sx={{ flex: { xs: '1 1 140px', lg: '0 0 auto' } }}
-              >
-                {editing ? 'Update' : 'Add'}
-              </Button>
-              {editing && (
-                <Button onClick={resetForm} sx={{ flex: { xs: '1 1 120px', lg: '0 0 auto' } }}>
-                  Cancel
-                </Button>
-              )}
-            </Box>
-          </Box>
+        <Box sx={{ p: { xs: 2, sm: 3 }, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+          <TextField
+            label="Shift Name"
+            value={shiftForm.shiftName}
+            onChange={(e) => setShiftForm((prev) => ({ ...prev, shiftName: e.target.value }))}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+          />
+          <TextField
+            label="Start Time"
+            type="time"
+            value={shiftForm.startTime}
+            onChange={(e) => setShiftForm((prev) => ({ ...prev, startTime: e.target.value }))}
+            InputLabelProps={{ shrink: true }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+          />
+          <TextField
+            label="End Time"
+            type="time"
+            value={shiftForm.endTime}
+            onChange={(e) => setShiftForm((prev) => ({ ...prev, endTime: e.target.value }))}
+            InputLabelProps={{ shrink: true }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+          />
+        </Box>
 
-          <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table size="small" sx={{ minWidth: 520 }}>
-              <TableHead>
+        {editing && (
+          <Box sx={{ px: { xs: 2, sm: 3 }, pb: 2 }}>
+            <Button onClick={resetForm} sx={{ textTransform: 'none' }}>
+              Cancel Edit
+            </Button>
+          </Box>
+        )}
+      </Card>
+
+      <Card sx={{ borderRadius: 4, border: '1px solid #E8F5E9', overflow: 'hidden', boxShadow: 'none' }}>
+        <TableContainer sx={{ height: 500, maxHeight: { xs: '68vh', md: 500 }, overflow: 'auto', '&::-webkit-scrollbar': { width: 8, height: 8 }, '&::-webkit-scrollbar-thumb': { backgroundColor: '#C8E6C9', borderRadius: 10 } }}>
+          <Table stickyHeader sx={{ minWidth: { xs: 640, md: 780 } }}>
+            <TableHead>
+              <TableRow sx={{ '& th': { fontWeight: 700, bgcolor: '#F1F8F4', color: '#1F2937' } }}>
+                <TableCell>#</TableCell>
+                <TableCell>Shift Name</TableCell>
+                <TableCell>Time</TableCell>
+                <TableCell align="center">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {isLoading && (
                 <TableRow>
-                  <TableCell>Shift</TableCell>
-                  <TableCell>Start</TableCell>
-                  <TableCell>End</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
+                    <CircularProgress />
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {isLoading && (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
-                )}
-                {isError && (
-                  <TableRow>
-                    <TableCell colSpan={4}>
-                      <Alert severity="error">Failed to load shifts</Alert>
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!isLoading && !isError && shifts.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      No shifts created.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {shifts.map((shift) => (
-                  <TableRow key={shift.id}>
-                    <TableCell>{shift.shiftName}</TableCell>
-                    <TableCell>{shift.startTime?.slice(0, 5)}</TableCell>
-                    <TableCell>{shift.endTime?.slice(0, 5)}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Edit">
-                        <IconButton size="small" onClick={() => handleEdit(shift)}>
-                          <Edit fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => {
-                            if (window.confirm(`Delete shift "${shift.shiftName}"?`)) {
-                              deleteShift.mutate(shift.id)
-                            }
-                          }}
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
+              )}
+              {isError && (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                    <Alert severity="error">Failed to load shifts</Alert>
+                  </TableCell>
+                </TableRow>
+              )}
+              {!isLoading && !isError && shifts.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
+                    No shifts created.
+                  </TableCell>
+                </TableRow>
+              )}
+              {shifts.map((shift, index) => (
+                <TableRow key={shift.id} hover sx={{ bgcolor: index % 2 === 0 ? '#FFFFFF' : '#FAFAFA', '& td': { py: 1.5 } }}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>
+                    <Typography fontWeight={600} color="#1F2937">
+                      {shift.shiftName}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary">
+                      {shift.startTime?.slice(0, 5)} - {shift.endTime?.slice(0, 5)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="Edit">
+                      <IconButton size="small" sx={{ color: '#2563EB' }} onClick={() => handleEdit(shift)}>
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <IconButton
+                        size="small"
+                        sx={{ color: '#DC2626' }}
+                        onClick={() => {
+                          if (window.confirm(`Delete shift "${shift.shiftName}"?`)) {
+                            deleteShift.mutate(shift.id)
+                          }
+                        }}
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Card>
     </Box>
   )
