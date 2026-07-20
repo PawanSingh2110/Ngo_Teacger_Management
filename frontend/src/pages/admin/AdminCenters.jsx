@@ -94,6 +94,8 @@ function CenterDialog({
     radiusInMeters:
       center?.radiusInMeters || 300,
   })
+  const [locationStatus, setLocationStatus] = useState('')
+  const [isGettingLocation, setIsGettingLocation] = useState(false)
 
   useEffect(() => {
     setForm({
@@ -108,7 +110,36 @@ function CenterDialog({
       radiusInMeters:
         center?.radiusInMeters || 300,
     })
+    setLocationStatus('')
+    setIsGettingLocation(false)
   }, [center, open])
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('Geolocation is not supported by this browser.')
+      return
+    }
+
+    setIsGettingLocation(true)
+    setLocationStatus('Fetching your current location...')
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm((prev) => ({
+          ...prev,
+          latitude: position.coords.latitude.toString(),
+          longitude: position.coords.longitude.toString(),
+        }))
+        setLocationStatus('Current location captured successfully.')
+        setIsGettingLocation(false)
+      },
+      () => {
+        setLocationStatus('Unable to get your current location. You can enter coordinates manually instead.')
+        setIsGettingLocation(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    )
+  }
 
   const { mutate, isPending } =
     useMutation({
@@ -207,6 +238,30 @@ function CenterDialog({
                   },
               }}
             />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Button
+              variant="outlined"
+              startIcon={<LocationOn />}
+              onClick={handleUseCurrentLocation}
+              disabled={isGettingLocation}
+              sx={{
+                borderRadius: 3,
+                textTransform: 'none',
+                mb: 1,
+              }}
+            >
+              {isGettingLocation ? 'Fetching location...' : 'Use current location'}
+            </Button>
+            {locationStatus && (
+              <Typography variant="body2" color={locationStatus.includes('success') ? 'success.main' : 'text.secondary'} sx={{ mt: 0.5 }}>
+                {locationStatus}
+              </Typography>
+            )}
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+              You can use your current location or enter latitude and longitude manually.
+            </Typography>
           </Grid>
 
           <Grid item xs={6}>
