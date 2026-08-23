@@ -32,7 +32,25 @@ export default function LoginPage() {
   })
 
   const [showPass, setShowPass] = useState(false)
+  const [maskEmail, setMaskEmail] = useState(false)
   const [error, setError] = useState('')
+
+  const maskEmailValue = (value) => {
+    if (!value) return ''
+
+    const atIndex = value.indexOf('@')
+    if (atIndex === -1) return value
+
+    const localPart = value.slice(0, atIndex)
+    const domain = value.slice(atIndex + 1)
+
+    if (!localPart || !domain) return value
+
+    const visibleChars = localPart.length > 2 ? localPart.slice(0, 2) : localPart.slice(0, 1)
+    const hiddenChars = '*'.repeat(Math.max(localPart.length - visibleChars.length, 1))
+
+    return `${visibleChars}${hiddenChars}@${domain}`
+  }
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => authApi.login(form),
@@ -180,7 +198,9 @@ export default function LoginPage() {
               type="email"
               autoFocus
               required
-              value={form.email}
+              value={maskEmail ? maskEmailValue(form.email) : form.email}
+              onBlur={() => setMaskEmail(true)}
+              onFocus={() => setMaskEmail(false)}
               onChange={(e) =>
                 setForm({
                   ...form,
