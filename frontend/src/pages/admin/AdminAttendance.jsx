@@ -491,6 +491,7 @@ export default function AdminAttendance() {
                 <TableCell width={160}>Logout Time</TableCell>
                 <TableCell width={150}>Punctuality</TableCell>
                 <TableCell width={190}>Logout Location</TableCell>
+                <TableCell width={140}>Distance From Center</TableCell>
                 <TableCell width={120}>Status</TableCell>
               </TableRow>
             </TableHead>
@@ -591,6 +592,9 @@ export default function AdminAttendance() {
                         fontWeight: 600,
                       }}
                     />
+                  </TableCell>
+                  <TableCell sx={{ color: theme.primaryText, fontWeight: 600 }}>
+                    {r.logoutDistanceMeters == null ? '—' : `${Number(r.logoutDistanceMeters).toFixed(1)} m`}
                   </TableCell>
                   <TableCell>
                     <Chip

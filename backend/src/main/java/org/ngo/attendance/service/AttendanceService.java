@@ -63,10 +63,14 @@ public class AttendanceService {
         LocalDateTime shiftStart = LocalDateTime.of(today, shift.getStartTime());
         LocalDateTime shiftEnd = LocalDateTime.of(today, shift.getEndTime());
 
-        if (now.isBefore(shiftStart)) {
+        LocalDateTime earliestAllowedCheckIn = shiftStart.minusMinutes(20);
+        if (now.isBefore(earliestAllowedCheckIn)) {
             throw new BusinessException(
-                    "Your shift has not started. Shift starts at " +
+                    "You can mark attendance only up to 20 minutes before the shift starts. " +
+                            "Shift starts at " +
                             shift.getStartTime().format(DateTimeFormatter.ofPattern("hh:mm a")) +
+                            ". Earliest allowed time: " +
+                            earliestAllowedCheckIn.toLocalTime().format(DateTimeFormatter.ofPattern("hh:mm a")) +
                             ". Current time: " + now.format(DateTimeFormatter.ofPattern("hh:mm a")));
         }
         if (now.isAfter(shiftEnd)) {
@@ -143,12 +147,6 @@ public class AttendanceService {
         }
 
         LocalDateTime now = AppClock.now();
-        LocalDateTime shiftEnd = LocalDateTime.of(attendance.getAttendanceDate(), attendance.getShift().getEndTime());
-        if (now.isBefore(shiftEnd)) {
-            throw new BusinessException(
-                    "Your shift has not ended yet. Logout can be marked after " +
-                            attendance.getShift().getEndTime().format(DateTimeFormatter.ofPattern("hh:mm a")));
-        }
 
         Center center = attendance.getCenter();
         double distance = GeoUtils.calculateDistance(

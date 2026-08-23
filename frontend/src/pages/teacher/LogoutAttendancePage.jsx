@@ -43,7 +43,6 @@ export default function LogoutAttendancePage() {
   const shiftEnd = record?.shiftEndTime
     ? dayjs(`${record.attendanceDate}T${record.shiftEndTime}`)
     : null
-  const shiftEnded = shiftEnd ? !now.isBefore(shiftEnd) : false
 
   const { mutate: markLogout, isPending } = useMutation({
     mutationFn: (location) => attendanceApi.markLogout(location),
@@ -98,22 +97,6 @@ export default function LogoutAttendancePage() {
     return () => window.clearInterval(timer)
   }, [])
 
-  useEffect(() => {
-    if (!record?.id || !shiftEnded || isLoggedOut || isPending || gettingLocation) return
-    if (!navigator.permissions?.query) return
-
-    const autoLogoutKey = `auto-logout-${record.id}`
-    if (sessionStorage.getItem(autoLogoutKey)) return
-    sessionStorage.setItem(autoLogoutKey, 'attempted')
-
-    navigator.permissions
-      .query({ name: 'geolocation' })
-      .then((permission) => {
-        if (permission.state === 'granted') submitLogout(true)
-      })
-      .catch(() => {})
-  }, [record?.id, shiftEnded, isLoggedOut, isPending, gettingLocation])
-
   return (
     <Box sx={{ width: '100%', overflowX: 'hidden' }}>
       <Box sx={{ mb: 4 }}>
@@ -156,11 +139,9 @@ export default function LogoutAttendancePage() {
                 ? 'Checking today attendance...'
                 : isLoggedOut
                   ? 'Your teaching session has been closed.'
-                  : shiftEnded
-                    ? 'Your shift has ended. Mark your logout attendance.'
-                    : shiftEnd
-                      ? `Available after your shift ends at ${shiftEnd.format('hh:mm A')}.`
-                      : 'Mark your attendance first before logout attendance.'}
+                  : shiftEnd
+                    ? 'You can log out any time. We will record the exact time and whether you were inside or outside the center.'
+                    : 'Mark your attendance first before logout attendance.'}
             </Typography>
           </Box>
           <Chip
@@ -197,15 +178,21 @@ export default function LogoutAttendancePage() {
               <Typography color={theme.secondaryText} sx={{ mt: 0.5 }}>
                 Logged out at <strong>{dayjs(record.logoutTime).format('hh:mm A')}</strong>
               </Typography>
+              {record?.logoutWithinRadius !== null && record?.logoutWithinRadius !== undefined && (
+                <Chip
+                  label={record.logoutWithinRadius ? 'Inside center' : 'Outside center'}
+                  color={record.logoutWithinRadius ? 'success' : 'warning'}
+                  variant="outlined"
+                  sx={{ mt: 2, fontWeight: 700 }}
+                />
+              )}
             </Box>
           )}
 
           {!isLoading && !isError && hasAttendance && !isLoggedOut && (
             <Box sx={{ maxWidth: 620, mx: 'auto' }}>
               <Alert severity="info" sx={{ mb: 3 }}>
-                {shiftEnded
-                  ? "Mark logout to close today's attendance session."
-                  : 'The logout action will become available when your shift ends.'}
+                You can log out at any time. The system will note the exact logout time and whether you were inside or outside the center.
               </Alert>
 
               {error && (
@@ -223,7 +210,7 @@ export default function LogoutAttendancePage() {
                       : <Logout />
                   }
                   onClick={() => submitLogout()}
-                  disabled={!shiftEnded || gettingLocation || isPending}
+                  disabled={gettingLocation || isPending}
                   sx={{
                     bgcolor: theme.primaryGreen,
                     fontWeight: 600,

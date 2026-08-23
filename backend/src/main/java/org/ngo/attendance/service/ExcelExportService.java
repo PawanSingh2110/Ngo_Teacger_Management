@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +44,7 @@ public class ExcelExportService {
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Teacher Attendance Report");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 8));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 9));
             titleRow.setHeightInPoints(30);
 
             // ── Sub-title: record count ──────────────────────────
@@ -51,7 +52,7 @@ public class ExcelExportService {
             Cell subCell = subRow.createCell(0);
             subCell.setCellValue("Total Records: " + records.size());
             subCell.setCellStyle(dataStyle);
-            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 8));
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 9));
 
             // ── Blank row ────────────────────────────────────────
             sheet.createRow(2);
@@ -59,7 +60,7 @@ public class ExcelExportService {
             // ── Header Row ───────────────────────────────────────
             String[] headers = {
                 "#", "Teacher Name", "Center", "Date", "Login Time", "Logout Time",
-                "Status", "Logout Location", "Center Address"
+                "Status", "Logout Location", "Distance From Center (m)", "Center Address"
             };
             Row headerRow = sheet.createRow(3);
             headerRow.setHeightInPoints(20);
@@ -102,10 +103,15 @@ public class ExcelExportService {
                     : rec.getLogoutWithinRadius() ? "Inside center radius" : "Outside center radius";
                 createCell(row, 7, logoutLocation, dataStyle);
 
+                String logoutDistance = rec.getLogoutDistanceMeters() == null
+                    ? "—"
+                    : String.format(Locale.ENGLISH, "%.1f", rec.getLogoutDistanceMeters());
+                createCell(row, 8, logoutDistance, dataStyle);
+
                 String centerAddress = rec.getCenterAddress() != null && !rec.getCenterAddress().isBlank()
                     ? rec.getCenterAddress()
                     : "—";
-                createCell(row, 8, centerAddress, dataStyle);
+                createCell(row, 9, centerAddress, dataStyle);
             }
 
             // ── Summary section ──────────────────────────────────
@@ -119,7 +125,7 @@ public class ExcelExportService {
             Cell sh = summaryHeader.createCell(0);
             sh.setCellValue("Summary");
             sh.setCellStyle(headerStyle);
-            sheet.addMergedRegion(new CellRangeAddress(rowNum - 1, rowNum - 1, 0, 8));
+            sheet.addMergedRegion(new CellRangeAddress(rowNum - 1, rowNum - 1, 0, 9));
 
             Row presentRow = sheet.createRow(rowNum++);
             createCell(presentRow, 0, "Total Present", dataStyle);
@@ -142,7 +148,8 @@ public class ExcelExportService {
             sheet.setColumnWidth(5, 15 * 256);   // Logout Time
             sheet.setColumnWidth(6, 12 * 256);   // Status
             sheet.setColumnWidth(7, 24 * 256);   // Logout Location
-            sheet.setColumnWidth(8, 45 * 256);   // Center Address
+            sheet.setColumnWidth(8, 18 * 256);   // Logout Distance
+            sheet.setColumnWidth(9, 45 * 256);   // Center Address
 
             // ── Freeze header ────────────────────────────────────
             sheet.createFreezePane(0, 4);
